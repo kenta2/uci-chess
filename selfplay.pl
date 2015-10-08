@@ -1,4 +1,6 @@
 #! perl -w
+# detect stalemate, threefold repetition, fifty move rule.
+# not perpetual check.
 use strict;
 use Chess::Rep;
 die unless defined $ENV{chesslog};
