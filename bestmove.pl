@@ -1,29 +1,10 @@
 #!perl -w
-use Chess::Rep;
 use Expect;
 use strict;
 # stalemate, threefold repetition, fifty move rule
 $::command = "$ENV{HOME}/bin/stockfish";
 $::killswitch = "/tmp/killswitch";
 &main;
-sub test1 {
-    my$rep=Chess::Rep->new;
-    print $rep->get_fen;
-    for(1..0){
-        foreach(qw/Nf3 Nf6 Ng1 Ng8/){
-            $rep->go_move($_);
-            print $rep->get_fen;
-        }
-    }
-    $rep->go_move('e4');
-    print $rep->get_fen;
-    $rep->go_move('e5');
-    print $rep->get_fen;
-    foreach(qw/Nf3 Nf6 Ng1 Ng8/){
-        $rep->go_move($_);
-        print $rep->get_fen;
-    }
-}
 
 sub main {
     die unless @ARGV>0;
@@ -58,13 +39,10 @@ sub start_engine {
 
 sub engine {
     my $movelist1=shift;
-    #print "--$movelist1--\n";
     my $timethink=shift;
-    #print "movelist1 $movelist1\n";
-
 
     &start_engine;
-    #$::exp->send("ucinewgame\r");  #should do readok after this
+    #$::exp->send("ucinewgame\r");  #should do readyok after this
     $::exp->send("position startpos moves$movelist1\rgo $timethink\r");
     my $successfully_matching_string;
     for(;;){
@@ -90,7 +68,6 @@ sub engine {
     }
     die unless $successfully_matching_string=~/^bestmove (\S+)/;
     my $computermove=$1;
-    #print "$computermove: score $score, pv $pv\n";
     $::exp->send("quit\r");
     $::exp->expect(undef);
     $computermove;
