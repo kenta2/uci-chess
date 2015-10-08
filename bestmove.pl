@@ -4,26 +4,27 @@ use strict;
 # stalemate, threefold repetition, fifty move rule
 $::command = "$ENV{HOME}/bin/stockfish";
 $::killswitch = "/tmp/killswitch";
+$::log = "/tmp/stockfish.log";
 &main;
 
 sub main {
     die unless @ARGV>0;
-    my$depth=shift@ARGV;
-    #print $depth;
+    my$timethink=shift@ARGV;
+    #print $timethink;
     my$list='';
     for(@ARGV){
         die unless /^\S+$/;
         $list.=" $_";
     }
     #print $list;
-    print &engine($list,$depth),"\n";
+    print &engine($list,$timethink),"\n";
 }
 
 sub start_engine {
     $::exp=Expect -> spawn($::command)
 	or die;
     $::exp->log_stdout(0);
-    #$::exp->log_file("/tmp/glauxz12.log");
+    $::exp->log_file($::log);
     #getting these line endings wrong results in very confusing behavior
     #the line endings also depend on the -l switch to perl
     $::exp->expect(15, ("Kiiski\r\n")) or die;
