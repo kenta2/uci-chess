@@ -8,7 +8,6 @@ use Chess::Rep;
 die unless defined $ENV{chesslog};
 die if -e $ENV{chesslog};
 print "chesslog=$ENV{chesslog}\n";
-my$list='';
 my$nodes_per_minute=36_000_000*10.;
 my$nodes_per_hour=$nodes_per_minute*60;
 my$total_hours=0.5/60;
@@ -17,6 +16,8 @@ my$total_moves=80;
 my$nodes=int($total_nodes/$total_moves);
 my$timethink="nodes $nodes";
 #6.25s per million x 10 moves
+
+my$list='';
 my$pos=Chess::Rep->new;
 for(@ARGV){
     die unless /^\S+$/;
