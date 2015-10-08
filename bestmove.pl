@@ -34,6 +34,7 @@ sub start_engine {
     $::exp->send("setoption name Clear Hash\r");
 #    $::exp->send("setoption name MultiPV value 400\r");
     $::exp->send("isready\r");
+    #weirdly, stockfish occasionally dies here
     $::exp->expect(undef,("readyok\r\n")) or die;
     $::exp->send("ucinewgame\risready\r");
     $::exp->expect(undef,("readyok\r\n")) or die;

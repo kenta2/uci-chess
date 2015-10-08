@@ -20,17 +20,24 @@ my$timethink="nodes $nodes";
 my$pos=Chess::Rep->new;
 for(@ARGV){
     die unless /^\S+$/;
-    print"$_ ";
-    $list.=" $_";
-    die unless defined($pos->go_move($_));
+    my$details;
+    die unless defined($details=$pos->go_move($_));
+    my$construct=lc($details->{from}.$details->{to});
+    print"$construct ";
+    $list.=" $construct";
+
 }
 print '|';
 #not counting repetitions in the opening
 my %repetitions;
 for(my$i=0;;++$i){
     #print $list,"\n";
-    $_=`perl bestmove.pl "$timethink" $list`;
-    chomp;
+    for(;;){
+        $_=`perl bestmove.pl "$timethink" $list`;
+        chomp;
+        last if /\S/;
+        print " (retry)";
+    }
     print" $_";
 
     if($_ eq '(none)'){
