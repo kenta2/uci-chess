@@ -1,10 +1,13 @@
 #! perl -w
+#chesslog=/tmp/stockfish-$(date +%s).log nice time perl selfplay.pl
+
 # detect stalemate, threefold repetition, fifty move rule.
 # not perpetual check.
 use strict;
 use Chess::Rep;
 die unless defined $ENV{chesslog};
 die if -e $ENV{chesslog};
+print "chesslog=$ENV{chesslog}\n";
 my$list='';
 my$nodes_per_minute=36_000_000*10.;
 my$nodes_per_hour=$nodes_per_minute*60;

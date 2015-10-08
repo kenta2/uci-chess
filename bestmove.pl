@@ -30,8 +30,8 @@ sub start_engine {
     $::exp->send("uci\r");
     $::exp->expect(5,("uciok\r\n")) or die;
     $::exp->send("setoption name Threads value 4\r");
-    #$::exp->send("setoption name Hash value 900\r");
-    #$::exp->send("setoption name Clear Hash\r");
+    #$::exp->send("setoption name Hash value 9000\r");
+    $::exp->send("setoption name Clear Hash\r");
 #    $::exp->send("setoption name MultiPV value 400\r");
     $::exp->send("isready\r");
     $::exp->expect(undef,("readyok\r\n")) or die;
