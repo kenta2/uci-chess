@@ -1,7 +1,7 @@
 #!perl -w
 use Expect;
 use strict;
-$::command = "$ENV{HOME}/bin/stockfish";
+$::command = 'stockfish';
 &main;
 
 sub main {
