@@ -11,7 +11,7 @@ while(<FI>){
 }
 die unless defined($list);
 die unless $fen;
-$fen=~s/\d+$//;
+$fen=~s/ \d+$//;
 $fen=~s,/,.,g;
 $fen=~s/ /_/g;
 $fen="run/queue/$fen";
