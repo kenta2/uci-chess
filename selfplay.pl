@@ -33,6 +33,9 @@ for(@ARGV){
     my$details;
     die unless defined($details=$pos->go_move($_));
     my$construct=lc($details->{from}.$details->{to});
+    if(defined$details->{promote}){
+        $construct.=lc($details->{promote});
+    }
     print"$construct ";
     $list.=" $construct";
 
