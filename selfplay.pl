@@ -42,18 +42,25 @@ print ' |';
 my %repetitions;
 for(my$i=0;;++$i){
     #print $list,"\n";
-    for(;;){
+    for my$retries(1..10000){
         $_=`perl bestmove.pl --log=$ENV{chesslog} $opts "$timethink" $list`;
         chomp;
         last if /\S/;
         print " (retry)";
     }
+    die unless /\S/; #too many retries
     print" $_";
 
     if($_ eq '(none)'){
         print "\n";
-        print "mate\n" if $pos->status->{mate};
-        print "stalemate\n" if $pos->status->{stalemate};
+        if($pos->status->{mate}){
+            print "mate";
+        } elsif($pos->status->{stalemate}){
+            print "stalemate";
+        } else {
+            die;
+        }
+        print"\n";
         last;
     }
     $list .= " $_";
@@ -65,7 +72,7 @@ for(my$i=0;;++$i){
     die unless $color eq 'w' or $color='b';
     die unless $fifty =~ /^\d+$/;
     die unless $movecount =~ /^\d+$/;
-    if($fifty>=50){
+    if($fifty>=(2*50)){ #halfmoves
         print "\nfifty move rule\n";
         last;
     }
@@ -77,3 +84,4 @@ for(my$i=0;;++$i){
         last;
     }
 }
+# perhaps try to detect insufficient material to checkmate
