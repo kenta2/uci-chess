@@ -25,7 +25,7 @@ if($moves){
     $status=$pos->status;
     $moves=$status->{moves};
     for(@$moves){
-        $base=lc(Chess::Rep::get_field_id($$_{from})).lc(Chess::Rep::get_field_id($$_{to}));
+        $base=lc(Chess::Rep::get_field_id($$_{from}).Chess::Rep::get_field_id($$_{to}));
         $finished=0;
         if($$_{piece}&1){ #pawn
             @rc=Chess::Rep::get_row_col($$_{to});
