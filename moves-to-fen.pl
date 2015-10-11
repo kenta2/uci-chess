@@ -5,6 +5,7 @@ GetOptions('fen'=>\$fen,
            'list'=>\$dolist,
            'moves'=>\$moves,
            'dump'=>\$dodump,
+           'status'=>\$dostatus,
     );
 $list='';
 $pos=Chess::Rep->new;
@@ -18,7 +19,13 @@ for(@ARGV){
     }
     $list.=" ".lc$construct;
 }
-print "fen ",$pos->get_fen,"\n" if $fen;
+if($fen){
+    $_=$pos->get_fen;
+    s/\s+\d+$//; #discard move count
+    s,/,.,g;
+    s/ /_/g;
+    print "fen $_\n";
+}
 print "list",$list,"\n" if $dolist;
 if($moves){
     print"moves";
@@ -44,3 +51,9 @@ if($moves){
     print"\n";
 }
 print $pos->dump_pos,"\n" if $dodump;
+if($dostatus){
+    print "mate\n" if $pos->status->{mate};
+    print "stalemate\n" if $pos->status->{stalemate};
+    #perl moves-to-fen.pl --status c4 h5 h4 a5 Qa4 Ra6 Qxa5 Rah6 Qxc7 f6 Qxd7+ Kf7 Qxb7 Qd3 Qxb8 Qh7 Qxc8 Kg6 Qe6
+
+}
