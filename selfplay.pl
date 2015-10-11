@@ -26,21 +26,18 @@ GetOptions('o=s' => \$opts,
 my$timethink="nodes $nodes";
 #6.25s per million x 10 moves
 
-my$list='';
 my$pos=Chess::Rep->new;
+my$command='perl moves-to-fen.pl --list';
 for(@ARGV){
     die unless /^\S+$/;
-    my$details;
-    die unless defined($details=$pos->go_move($_));
-    my$construct=lc($details->{from}.$details->{to});
-    if(defined$details->{promote}){
-        $construct.=lc($details->{promote});
-    }
-    print"$construct ";
-    $list.=" $construct";
-
+    die unless defined($pos->go_move($_));
+    $command.=" ".$_;
 }
-print '|';
+my$list=`$command`;
+chomp$list;
+die unless ($list=~s/^list\s*//);
+print $list;
+print ' |';
 #not counting repetitions in the opening
 my %repetitions;
 for(my$i=0;;++$i){
