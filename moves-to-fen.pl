@@ -12,11 +12,11 @@ for(@ARGV){
     die unless /^\S+$/;
     my$details;
     die unless defined($details=$pos->go_move($_));
-    my$construct=lc($details->{from}.$details->{to});
+    my$construct=$details->{from}.$details->{to};
     if(defined$details->{promote}){
-        $construct.=lc($details->{promote});
+        $construct.=$details->{promote};
     }
-    $list.=" $construct";
+    $list.=" ".lc$construct;
 }
 print "fen ",$pos->get_fen,"\n" if $fen;
 print "list",$list,"\n" if $dolist;
