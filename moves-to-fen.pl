@@ -4,6 +4,7 @@ use Getopt::Long;
 GetOptions('fen'=>\$fen,
            'list'=>\$dolist,
            'moves'=>\$moves,
+           'dump'=>\$dodump,
     );
 $list='';
 $pos=Chess::Rep->new;
@@ -21,7 +22,22 @@ if($moves){
     $status=$pos->status;
     $moves=$status->{moves};
     for(@$moves){
-        print " ",lc(Chess::Rep::get_field_id($$_{from})),lc(Chess::Rep::get_field_id($$_{to}));
+        $base=lc(Chess::Rep::get_field_id($$_{from})).lc(Chess::Rep::get_field_id($$_{to}));
+        $finished=0;
+        if($$_{piece}&1){ #pawn
+            @rc=Chess::Rep::get_row_col($$_{to});
+            die unless @rc==2;
+            die unless defined($rank=$rc[0]);
+
+            if((Chess::Rep::piece_color($$_{piece})and$rank==7)or
+               (!Chess::Rep::piece_color($$_{piece})and$rank==0)){
+                for(qw(q r n b)){
+                    print " ",$base,$_;
+                }
+                $finished=1;
+            }}
+        print" ",$base unless $finished;
     }
     print"\n";
 }
+print $pos->dump_pos,"\n" if $dodump;
