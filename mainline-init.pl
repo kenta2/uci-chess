@@ -1,19 +1,21 @@
 #!perl -wl
-use Chess::Rep;
-$list='';
-$pos=Chess::Rep->new;
+$command='perl moves-to-fen.pl --fen --list';
 for(@ARGV){
-    die unless /^\S+$/;
-    die unless defined($details=$pos->go_move($_));
-    $construct=lc($details->{from}.$details->{to});
-    $list.=" $construct";
+    $command.=" $_";
 }
-$fen=$pos->get_fen;
-$fen=~s/\d+$//g;
+open FI,"$command|" or die;
+while(<FI>){
+    chomp;
+    $fen=$1 if /^fen (.*)/;
+    $list=$1 if /^list(.*)/;
+}
+die unless defined($list);
+die unless $fen;
+$fen=~s/\d+$//;
 $fen=~s,/,.,g;
 $fen=~s/ /_/g;
-$fen="queue/$fen";
-die if -e "$fen";
+$fen="run/queue/$fen";
+die if -e $fen;
 open FO,">$fen" or die;
 print FO "proof$list";
-print FO "main";
+close FO;
