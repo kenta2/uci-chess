@@ -1,10 +1,18 @@
 #!perl -w
 use Expect;
 use strict;
-$::command = 'stockfish';
+use Getopt::Long;
 &main;
 
 sub main {
+    $::command = 'stockfish';
+    GetOptions('engine=s' => \$::command,
+               'threads=i' => \$::threads,
+               'verbose'=>\$::verbose,
+               'log=s'=>\$::logfile,
+               'multipv'=>\$::multipv,
+               'hash=i'=>\$::hashsize
+        );
     die unless @ARGV>0;
     my$timethink=shift@ARGV;
     #print $timethink;
@@ -20,19 +28,27 @@ sub main {
 sub start_engine {
     $::exp=Expect -> spawn($::command)
 	or die;
-    if(defined($ENV{chesslog})){
+    unless($::verbose){
         $::exp->log_stdout(0);
-        $::exp->log_file($ENV{chesslog});
+    }
+    if($::logfile){
+        $::exp->log_file($::logfile);
     }
     #getting these line endings wrong results in very confusing behavior
     #the line endings also depend on the -l switch to perl
     $::exp->expect(15, ("\r\n")) or die;
     $::exp->send("uci\r");
     $::exp->expect(5,("uciok\r\n")) or die;
-    $::exp->send("setoption name Threads value 4\r");
-    #$::exp->send("setoption name Hash value 9000\r");
+    if($::threads){
+        $::exp->send("setoption name Threads value $::threads\r");
+    }
+    if($::hashsize){
+        $::exp->send("setoption name Hash value $::hashsize\r");
+    }
     $::exp->send("setoption name Clear Hash\r");
-#    $::exp->send("setoption name MultiPV value 400\r");
+    if($::multipv){
+        $::exp->send("setoption name MultiPV value 400\r");
+    }
     $::exp->send("isready\r");
     #weirdly, stockfish occasionally dies here
     $::exp->expect(undef,("readyok\r\n")) or die;

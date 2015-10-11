@@ -1,19 +1,28 @@
 #! perl -w
-#chesslog=/tmp/stockfish-$(date +%s).log nice time perl selfplay.pl
+#chesslog=/tmp/stockfish-$(date +%s).log nice time perl selfplay.pl -o '--threads=4 --hash=500' d4 Nf6
 
 # detect stalemate, threefold repetition, fifty move rule.
 # not perpetual check.
 use strict;
 use Chess::Rep;
+use Getopt::Long;
+
 die unless defined $ENV{chesslog};
 die if -e $ENV{chesslog};
 print "chesslog=$ENV{chesslog}\n";
+
 my$nodes_per_minute=36_000_000*10.;
 my$nodes_per_hour=$nodes_per_minute*60;
 my$total_hours=0.5/60;
 my$total_nodes=$total_hours*$nodes_per_hour;
 my$total_moves=80;
 my$nodes=int($total_nodes/$total_moves);
+
+my$opts='';
+GetOptions('o=s' => \$opts,
+           'nodes=i' => \$nodes
+    );
+
 my$timethink="nodes $nodes";
 #6.25s per million x 10 moves
 
@@ -34,7 +43,7 @@ my %repetitions;
 for(my$i=0;;++$i){
     #print $list,"\n";
     for(;;){
-        $_=`perl bestmove.pl "$timethink" $list`;
+        $_=`perl bestmove.pl --log=$ENV{chesslog} $opts "$timethink" $list`;
         chomp;
         last if /\S/;
         print " (retry)";
