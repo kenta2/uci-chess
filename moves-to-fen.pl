@@ -6,6 +6,7 @@ GetOptions('fen'=>\$fen,
            'moves'=>\$moves,
            'dump'=>\$dodump,
            'status'=>\$dostatus,
+           'fifty'=>\$dofifty,
     );
 $list='';
 $pos=Chess::Rep->new;
@@ -22,6 +23,7 @@ for(@ARGV){
 if($fen){
     $_=$pos->get_fen;
     s/\s+\d+$//; #discard move count
+    s/\s+\d+$//; #discard halfmove count for 50-move draw
     s,/,.,g;
     s/ /_/g;
     print "fen $_\n";
@@ -56,4 +58,12 @@ if($dostatus){
     print "stalemate\n" if $pos->status->{stalemate};
     #perl moves-to-fen.pl --status c4 h5 h4 a5 Qa4 Ra6 Qxa5 Rah6 Qxc7 f6 Qxd7+ Kf7 Qxb7 Qd3 Qxb8 Qh7 Qxc8 Kg6 Qe6
 
+}
+if($dofifty){
+    $_=$pos->get_fen;
+    my($rle,$color,$castle,$enpassant,$fifty,$movecount)=split;
+    die unless $color eq 'w' or $color='b';
+    die unless $fifty =~ /^\d+$/;
+    die unless $movecount =~ /^\d+$/;
+    print "fifty $fifty\n";
 }

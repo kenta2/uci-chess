@@ -11,25 +11,36 @@ $i=int rand@queue;
 $file=$queue[$i];
 print "file $file";
 die unless ($base)=($file=~m,run/queue/(.*),);
-die unless ($fifty)=($base=~/(\d+$)/);
+($fiftyfen)=($base=~/_(\d+$)/) or $fiftyfen=0;  #preserve ability to use fifty-move draw if we bring it back
+
+open FI,$file or die;
+die unless defined($_=<FI>);
+close FI;
+die unless ($list)=/^proof(.*)/;
+print"moves$list";
+die unless `perl moves-to-fen.pl --fifty $list` =~ /fifty (\d+)/;
+$fiftyproof=$1;
+
 ($dbdir="run/db/$timethink")=~s/ /_/g;;
 mkdir $dbdir unless -e $dbdir;
 $db="$dbdir/$base";
-if(-e $db){
+if($fiftyfen>=2*50){
+    unless(-e $db){
+        open FO,">$db" or die;
+        print FO "draw fifty by fen" or die;
+        close FO or die;
+    }
+} elsif($fiftyproof>=2*50){
+    unless(-e $db){
+        open FO,">$db" or die;
+        print FO "draw fifty by proof game" or die;
+        close FO or die;
+    }
+} elsif(-e $db) {
     print "already db";
-} elsif($fifty>=2*50){
-    open FO,">$db" or die;
-    print FO "draw fifty" or die;
-    close FO or die;
 } else {
     open FO,">$db" or die;
     close FO or die; #empty file marks calculation in progress
-
-    open FI,$file or die;
-    die unless defined($_=<FI>);
-    close FI;
-    die unless ($list)=/^proof(.*)/;
-    print"moves$list";
     for my$retries(1..10000){
         $_=`perl bestmove.pl "$timethink" $list`;
         chomp;
@@ -53,7 +64,7 @@ if(-e $db){
         die unless $fen;
         $fen="run/queue/$fen";
         if (-e $fen){
-            print "transposition"
+            print "transposition";
         } else {
             open FO,">$fen" or die;
             print FO "proof$list";
@@ -61,4 +72,5 @@ if(-e $db){
         }
     }
 }
-unlink $file or die;
+#this can fail via race conditions but that is OK
+unlink $file;
