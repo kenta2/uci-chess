@@ -2,6 +2,8 @@
 #perl mainline-init.pl (moves)
 #time while perl mainline.pl "nodes 100000" ; do : ; done
 use Chess::Rep;
+
+#timethink ought to be initialized in mainline-init and stored in the queue
 die unless defined ($timethink=shift@ARGV);
 print "timethink $timethink";
 
@@ -63,7 +65,9 @@ if($fiftyfen>=2*50){
     open FO,">$db" or die;
     close FO or die; #empty file marks calculation in progress
     for my$retries(1..10000){
-        $_=`perl bestmove.pl --log=$db.log.$$ "$timethink" $list`;
+        $logfile="$db.log.$$";
+        $_=`perl bestmove.pl --log=$logfile "$timethink" $list`;
+        system "bzip2",$logfile;
         chomp;
         last if /\S/;
         print " (retry)";
