@@ -2,6 +2,7 @@
 #perl mainline-init.pl (moves)
 #time while perl mainline.pl "nodes 100000" ; do : ; done
 use Chess::Rep;
+use Time::HiRes;
 
 #timethink ought to be initialized in mainline-init and stored in the queue
 die unless defined ($timethink=shift@ARGV);
