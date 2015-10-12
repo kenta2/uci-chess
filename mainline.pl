@@ -65,7 +65,7 @@ if($fiftyfen>=2*50){
     open FO,">$db" or die;
     close FO or die; #empty file marks calculation in progress
     for my$retries(1..10000){
-        $logfile="$db.log.$$";
+        $logfile="$db.$$.log";
         $_=`perl bestmove.pl --log=$logfile "$timethink" $list`;
         system "bzip2",$logfile;
         chomp;
