@@ -4,7 +4,13 @@
 use Chess::Rep;
 die unless defined ($timethink=shift@ARGV);
 print "timethink $timethink";
-@queue=(<run/queue/*>);
+
+for$i(1..100){
+    @queue=(<run/queue/*>);
+    last if @queue;
+    print "waiting $i for queue";
+    &nanopause;
+}
 unless(@queue){
     die "empty queue";
 }
@@ -15,10 +21,23 @@ print "file $file";
 die unless ($base)=($file=~m,run/queue/(.*),);
 ($fiftyfen)=($base=~/_(\d+$)/) or $fiftyfen=0;  #preserve ability to use fifty-move draw if we bring it back
 
-open FI,$file or die;
-die unless defined($_=<FI>);
+#avoid race condition
+unless (open FI,$file) {
+    print "failed to open";
+    &nanopause;
+    exit;
+}
+unless(defined($_=<FI>)){
+    print "failed to read a line";
+    &nanopause;
+    exit;
+}
 close FI;
-die unless ($list)=/^proof(.*)/;
+unless (($list)=/^proof(.*)/){
+    print "line has wrong format: $_";
+    &nanopause;
+    exit;
+}
 print"moves$list";
 die unless `perl moves-to-fen.pl --fifty $list` =~ /fifty (\d+)/;
 $fiftyproof=$1;
@@ -68,6 +87,7 @@ if($fiftyfen>=2*50){
         if (-e $fen){
             print "transposition";
         } else {
+            print "new $fen";
             open FO,">$fen" or die;
             print FO "proof$list";
             close FO or die;
@@ -76,3 +96,7 @@ if($fiftyfen>=2*50){
 }
 #this can fail via race conditions but that is OK
 unlink $file;
+
+sub nanopause {
+    Time::HiRes::nanosleep(100*rand 1000_000);
+}
