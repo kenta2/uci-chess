@@ -1,4 +1,6 @@
 #!perl -wl
+#perl mainline-init.pl (moves)
+#time while perl mainline.pl "nodes 100000" ; do : ; done
 use Chess::Rep;
 die unless defined ($timethink=shift@ARGV);
 print "timethink $timethink";
@@ -42,7 +44,7 @@ if($fiftyfen>=2*50){
     open FO,">$db" or die;
     close FO or die; #empty file marks calculation in progress
     for my$retries(1..10000){
-        $_=`perl bestmove.pl "$timethink" $list`;
+        $_=`perl bestmove.pl --log=$db.log.$$ "$timethink" $list`;
         chomp;
         last if /\S/;
         print " (retry)";
