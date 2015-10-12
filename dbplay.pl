@@ -19,6 +19,8 @@ print $list;
 print ' |';
 #not counting repetitions in the opening
 my %repetitions;
+my $outcome;
+my $DRAW="1/2";
 for(my$i=0;;++$i){
     #print $list,"\n";
     #my$fen=`perl moves-to-fen.pl --fen $list`;
@@ -39,14 +41,23 @@ for(my$i=0;;++$i){
         # this branch tends never to be taken because it
         # will get caught by the internal check for the 50-move rule first.
         print "\n$_\n";
+        die unless /^draw/;
+        $outcome=$DRAW;
         last;
     }
     if($_ eq '(none)'){
         print "\n";
         if($pos->status->{mate}){
+            print $pos->dump_pos,"\n";
             print "mate";
+            if($pos->to_move){
+                $outcome="0-1";
+            } else {
+                $outcome="1-0";
+            }
         } elsif($pos->status->{stalemate}){
             print "stalemate";
+            $outcome=$DRAW;
         } else {
             die;
         }
@@ -64,6 +75,7 @@ for(my$i=0;;++$i){
     die unless $movecount =~ /^\d+$/;
     if($fifty>=(2*50)){ #halfmoves
         print "\nfifty move rule\n";
+        $outcome=$DRAW;
         last;
     }
     my$state="$rle $color $castle $enpassant"; #tricky question as to whether castling and enpassant matter in three-fold repetition;
@@ -71,7 +83,10 @@ for(my$i=0;;++$i){
     #print "repetitions $repetitions{$state}\n";
     if($repetitions{$state}>=3){
         print"\nthree-fold repetition\n";
+        $outcome=$DRAW;
         last;
     }
 }
+die unless defined $outcome;
+print "outcome $outcome\n";
 # perhaps try to detect insufficient material to checkmate
