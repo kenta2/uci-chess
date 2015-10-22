@@ -12,7 +12,7 @@ while(<FI>){
 die unless defined($list);
 die unless $fen;
 $fen="run/queue/$fen";
-die if -e $fen;
+die "already exists $fen" if -e $fen;
 open FO,">$fen" or die;
 print FO "proof$list";
 close FO;
