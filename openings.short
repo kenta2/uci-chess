@@ -63,8 +63,8 @@ e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 Nf6 Nc3 e5 Ndb5 d6 Bg5 a6 Na3 b5 Bxf6 gxf6 Nd5 f5
 # Keres attack
 # both of these from Wikipedia, probably a bit ridiculous
 #e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6 g4 h6 h4 Nc6 Rg1 d5 Bb5 Bd7 exd5 Nxd5 Nxd5 exd5 Qe2+ Be7 Nf5 Bxf5 gxf5 Kf8 Be3 Qa5+
-e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6 g4 h6 h4 Nc6 Rg1 d5
 #e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6 g4 h6 h4 Nc6 Rg1 h5 gxh5 Nxh5 Bg5 Nf6 Qd2
+e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6 g4 h6 h4 Nc6 Rg1 d5
 e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6 g4 h6 h4 Nc6 Rg1 h5
 e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6 Be2
 e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6 Be3
