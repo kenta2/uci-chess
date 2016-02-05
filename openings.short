@@ -1,4 +1,6 @@
-Nf3
+Nf3 Nf6 c4
+Nf3 Nf6 g3
+Nf3 d5 g3
 c4 e5
 c4 c5 Nf3 Nf6 Nc3
 c4 c5 Nf3 Nc6 Nc3
@@ -18,7 +20,7 @@ e4 d5 exd5 Qxd5 Nc3
 # Modern
 e4 g6 d4 Bg7 Nc3
 # berlin endgame
-e4 e5 Nf3 Nc6 Bb5 Nf6 O-O Nxe4 d4 Nd6 Bxc6 dxc6 dxe5 Nf5 Qxd8 Kxd8
+e4 e5 Nf3 Nc6 Bb5 Nf6 O-O Nxe4 d4 Nd6 Bxc6 dxc6 dxe5 Nf5 Qxd8 Kxd8 Nc3
 # Ruy Lopez Exchange
 e4 e5 Nf3 Nc6 Bb5 a6 Bxc6
 e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Na5
@@ -35,25 +37,31 @@ e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Nxe4 d4 b5 Bb3 d5 dxe5 Be6
 # Ruy Lopez Arkhangelsk
 e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O b5 Bb3 Bb7
 # Two Knights
-e4 e5 Nf3 Nc6 Bc4 Nf6
+e4 e5 Nf3 Nc6 Bc4 Nf6 d3 Be7 O-O O-O
 # Giuoco Piano
-e4 e5 Nf3 Nc6 Bc4 Bc5 c3
+e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6
 # Giuoco Pianissimo
 e4 e5 Nf3 Nc6 Bc4 Bc5 d3
 # Evans Gambit
-e4 e5 Nf3 Nc6 Bc4 Bc5 b4
+e4 e5 Nf3 Nc6 Bc4 Bc5 b4 Bxb4 c3
 # Scotch
 e4 e5 Nf3 Nc6 d4 exd4 Nxd4
 # Petroff
-e4 e5 Nf3 Nf6 Nxe5
-e4 e5 Nf3 Nf6 d4
+e4 e5 Nf3 Nf6 Nxe5 d6 Nf3 Nxe4 d4 d5 Bd3
+# Petroff Steinitz
+e4 e5 Nf3 Nf6 d4 Nxe4 Bd3 d5 Nxe5
 # Philidor
 e4 e5 Nf3 d6
 # Kings gambit
-e4 e5 f4 exf4
-e4 c5 Nc3
-e4 c5 Nf3 e6 d4 cxd4 Nxd4 Nc6
-e4 c5 Nf3 e6 d4 cxd4 Nxd4 Nf6
+e4 e5 f4 exf4 Nf3
+# Sicilian Closed
+e4 c5 Nc3 Nc6 g3 g6 Bg2 Bg7 d3 d6
+# Sicilian Alapin
+e4 c5 c3 Nf6 e5 Nd5 d4 cxd4 Nf3
+e4 c5 c3 d5 exd5 Qxd5 d4 Nf6 Nf3
+e4 c5 Nf3 e6 d4 cxd4 Nxd4 Nc6 Nc3 Qc7
+# transposes after d6
+e4 c5 Nf3 e6 d4 cxd4 Nxd4 Nf6 Nc3
 # Sicilian Kan
 e4 c5 Nf3 e6 d4 cxd4 Nxd4 a6 Bd3
 # Sveshnikov
@@ -96,26 +104,66 @@ e4 e6 d4 d5 exd5 exd5
 # French Advance
 e4 e6 d4 d5 e5 c5 c3 Nc6 Nf3
 d4 d5 c4 dxc4
-d4 d5 c4 c6 Nf3
+# Slav Czech
+d4 d5 c4 c6 Nf3 Nf6 Nc3 dxc4 a4 Bf5 e3
+d4 d5 c4 c6 Nf3 Nf6 Nc3 dxc4 a4 Bf5 Ne5
+# Chebanenko Slav
+d4 d5 c4 c6 Nf3 Nf6 Nc3 a6
+d4 d5 c4 c6 cxd5 cxd5
 d4 d5 c4 c6 Nc3
 # Semi-Slav Meran (probably via transposition)
 d4 d5 c4 e6 Nc3 c6 e3 Nf6 Nf3 Nbd7 Bd3 dxc4 Bxc4 b5 Bd3 a6
+d4 d5 c4 e6 Nc3 c6 e3 Nf6 Nf3 Nbd7 Bd3 dxc4 Bxc4 b5 Bd3 Bb7
+# Anti-Meran Karpov
+d4 d5 c4 e6 Nc3 c6 e3 Nf6 Nf3 Nbd7 Qc2 Bd6 Bd3 O-O O-O dxc4 Bxc4
+# transposes to above after Bxc4
+d4 d5 c4 e6 Nc3 c6 e3 Nf6 Nf3 Nbd7 Qc2 Bd6 Be2 O-O O-O dxc4
 # avoid transposition by continuing e3
 d4 d5 c4 e6 Nc3 Nf6 Nf3 c6
 d4 d5 c4 e6 Nc3 Nf6
-# Gruenfeld
-d4 Nf6 c4 g6 Nc3 d5 cxd5 Nxd5 e4 Nxc3 bxc3 Bg7
-d4 Nf6 c4 g6 Nc3 d5 Nf3 Bg7
-# Kings Indian
-d4 Nf6 c4 g6 Nc3 Bg7 e4 d6
+# Gruenfeld Exchange, classical
+d4 Nf6 c4 g6 Nc3 d5 cxd5 Nxd5 e4 Nxc3 bxc3 Bg7 Bc4 c5 Ne2 Nc6 Be3 O-O O-O
+# transposes to above after Be3
+d4 Nf6 c4 g6 Nc3 d5 cxd5 Nxd5 e4 Nxc3 bxc3 Bg7 Bc4 c5 Ne2 O-O O-O Nc6
+# Gruenfeld Modern Exchange
+d4 Nf6 c4 g6 Nc3 d5 cxd5 Nxd5 e4 Nxc3 bxc3 Bg7 Nf3 c5 Rb1 O-O Be2 cxd4 cxd4 Qa5
+d4 Nf6 c4 g6 Nc3 d5 cxd5 Nxd5 e4 Nxc3 bxc3 Bg7 Nf3 c5 Rb1 O-O Be2 Nc6 d5 Ne5 Nxe5 Bxe5 Qd2 e6 f4
+# Gruenfeld Russian System
+d4 Nf6 c4 g6 Nc3 d5 Nf3 Bg7 Qb3 dxc4 Qxc4 O-O e4
+# Kings Indian Classical
+d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nc6 d5 Ne7
+# Kings Indian Averbakh
+d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Be2 O-O Bg5
+# Kings Indian Saemisch
+d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3
+# Kings Indian Four Pawns
+d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f4 O-O Nf3 c5 d5 e6 Be2 exd5 cxd5 Bg4
+d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f4 O-O Nf3 c5 d5 e6 Be2 exd5 cxd5 Re8
 # Benoni, Benko Gambit
 d4 Nf6 c4 c5 d5 b5 cxb5 a6 bxa6
 # Queens Indian
-d4 Nf6 c4 e6 Nf3 b6
-# Nimzo Indian
-d4 Nf6 c4 e6 Nc3 Bb4
+d4 Nf6 c4 e6 Nf3 b6 g3 Ba6 b3 Bb4 Bd2 Be7 Bg2 c6 Bc3 d5 Ne5
+d4 Nf6 c4 e6 Nf3 b6 g3 Bb7 Bg2 Be7 O-O O-O Nc3 Ne4 Qc2 Nxc3 Qxc3
+# Queens Indian Petrosian
+d4 Nf6 c4 e6 Nf3 b6 a3 Bb7 Nc3 d5 cxd5 Nxd5
+d4 Nf6 c4 e6 Nf3 b6 a3 Ba6 Qc2 Bb7 Nc3 c5 e4 cxd4 Nxd4
+# transposes to above after a3
+d4 Nf6 c4 e6 Nf3 b6 Nc3 Bb7
+d4 Nf6 c4 e6 Nf3 b6 Nc3 Bb4
+# Nimzo-Indian
+d4 Nf6 c4 e6 Nc3 Bb4 Qc2 O-O a3 Bxc3 Qxc3 b6 Bg5 Bb7 f3 h6 Bh4 d5 e3 Nbd7 cxd5 Nxd5 Bxd8 Nxc3 Bh4 Nd5 Bf2
+d4 Nf6 c4 e6 Nc3 Bb4 Qc2 c5 dxc5 O-O a3 Bxc5 Nf3
+# Nimzo-Indian Rubenstein
+d4 Nf6 c4 e6 Nc3 Bb4 e3 O-O Bd3 d5 Nf3 c5 O-O dxc4 Bxc4 Nbd7
+# Nimzo-Indian Huebner
+d4 Nf6 c4 e6 Nc3 Bb4 e3 c5 Bd3 Nc6 Nf3 Bxc3 bxc3 d6
+d4 Nf6 c4 e6 Nc3 Bb4 e3 b6 Ne2 Ba6
 # Catalan
-d4 Nf6 c4 e6 g3 d5
+d4 Nf6 c4 e6 g3 d5 Bg2 Be7
+d4 Nf6 c4 e6 g3 d5 Bg2 dxc4
+# Bogo-Indian
+d4 Nf6 c4 e6 Nf3 Bb4 Bd2 Qe7 g3 Nc6
+d4 Nf6 c4 e6 Nf3 Bb4 Nbd2
 # Dutch
 d4 f5
 d4 e6
