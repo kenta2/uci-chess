@@ -1,6 +1,10 @@
 #!perl -wl
 #perl mainline-init.pl (moves)
 #time while perl mainline.pl "nodes 100000" ; do : ; done
+
+#Warning: it is fairly easy to exceed the maximum number of inodes (df -i).
+#Future: consider BerkeleyDB or sqlite.
+
 use Chess::Rep;
 use Time::HiRes;
 
