@@ -66,7 +66,8 @@ for my$fn(sort@logs){
     my$canonical=&make_canonical($fn);
     die unless defined($store_moves{$canonical});
     unless(defined$parent{$canonical}){
-        print"$store_moves{$canonical} = $canonical";
+        # tilde sorts late in ascii order
+        print"$store_moves{$canonical} ~ $canonical";
     }
 }
 sub make_canonical{
