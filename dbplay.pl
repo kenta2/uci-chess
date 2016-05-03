@@ -7,16 +7,19 @@ my$pos=Chess::Rep->new;
 my$command='perl moves-to-fen.pl --list';
 my $db=shift@ARGV;
 die unless defined($db);
+my$san="";
 for(@ARGV){
     die unless /^\S+$/;
-    die unless defined($pos->go_move($_));
+    die unless defined(my$details=$pos->go_move($_));
+    $san.=$$details{san}." ";
     $command.=" ".$_;
 }
 my$list=`$command`;
 chomp$list;
 die unless ($list=~s/^list\s*//);
-print $list;
+print "mainline $list";
 print ' |';
+$san.="|";
 #not counting repetitions in the opening
 my %repetitions;
 my $outcome;
@@ -48,7 +51,7 @@ for(my$i=0;;++$i){
     if($_ eq '(none)'){
         print "\n";
         if($pos->status->{mate}){
-            print $pos->dump_pos,"\n";
+            #print $pos->dump_pos,"\n";
             print "mate";
             if($pos->to_move){
                 $outcome="0-1";
@@ -65,7 +68,8 @@ for(my$i=0;;++$i){
         last;
     }
     $list .= " $_";
-    die unless defined($pos->go_move($_));
+    die unless defined(my$details=$pos->go_move($_));
+    $san.=' '.$$details{san};
     $fen=$pos->get_fen;
     #print "$fen\n";
     #print $pos->dump_pos,"\n";
@@ -89,4 +93,5 @@ for(my$i=0;;++$i){
 }
 die unless defined $outcome;
 print "outcome $outcome\n";
+print "san $san\n";
 # perhaps try to detect insufficient material to checkmate
