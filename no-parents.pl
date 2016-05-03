@@ -10,10 +10,11 @@ for(<$dir/*.log>){
 my%seen;
 my%parent;
 my%store_moves;
+my%store_fen;
 for(my$i=0;$i<@logs;++$i){
     my$fn=$logs[$i];
     my$canonical=&make_canonical($fn);
-    print"$i $canonical";
+    #print"$i $canonical";
     if(defined$seen{canonical}){
         print STDERR "duplicate $fn $seen{$fn}";
         next;
@@ -29,7 +30,12 @@ for(my$i=0;$i<@logs;++$i){
     }
     close FI;
     die unless defined($moves);
+    $moves=~s/\s+$//;
     $store_moves{$canonical}=$moves;
+    $store_fen{$moves}=$canonical;
+}
+for my$fn(@logs){
+    my$canonical=&make_canonical($fn);
     open FI,"$dir/$canonical" or die;
     my$bestmove;
     die if defined($bestmove);
@@ -41,14 +47,24 @@ for(my$i=0;$i<@logs;++$i){
     unless(defined$bestmove){
         print "skipping $canonical";
     }else{
-        #this call is slow
-        my$child=`perl moves-to-fen.pl --fen $moves $bestmove`;
-        die unless $child;
-        $parent{$child}.=" $child";
+        die unless defined(my$moves=$store_moves{$canonical});
+        my$query="$moves $bestmove";
+        $query =~ s/^ //;
+        my$child=$store_fen{"$query"};
+        if($child){
+            $parent{$child}.=" $child";
+        } else {
+            $child=`perl moves-to-fen.pl --fen $query`;
+            chomp$child;
+            die unless $child=~/^fen (\S+)$/;
+            $child=$1;
+            #print "Cannot find '$query'";
+        }
     }
 }
 for my$fn(sort@logs){
     my$canonical=&make_canonical($fn);
+    die unless $store_moves{$canonical};
     unless(defined$parent{$canonical}){
         print"$store_moves{$canonical} = $canonical";
     }
