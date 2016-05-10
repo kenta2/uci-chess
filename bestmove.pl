@@ -94,6 +94,10 @@ sub engine {
                 #sometimes the 1 appears twice
                 die unless $depth==($new-1);
                 #$cdepth=$depth;
+
+                #we report the #1 pv of the last completed depth,
+                #because multipv is otherwise weird and the final
+                #bestmove cannot be trusted.
                 %completed=%running;
                 undef%running;
                 #for(sort {$a<=>$b} keys %completed){ print"$_ $completed{$_}"; "reset $new";
