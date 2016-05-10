@@ -26,11 +26,12 @@ while(<>){
             for(sort {$a<=>$b} keys %completed){
                 print"$_ $completed{$_}";
             }
-            print "reset $new";
+            print "starting depth $new nodes $nodes";
         }
     }elsif(/^info nodes (\d+) time \d+$/){
         $nodes=$1
     }elsif(/^bestmove/){
+        print "loop exit via $_";
         last;
     }else{
         print;
