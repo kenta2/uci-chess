@@ -1,0 +1,15 @@
+Do not scale score to centipawns; instead use full precision available.
+
+diff --git a/src/uci.cpp b/src/uci.cpp
+index a9811a9..28c0fb0 100644
+--- a/src/uci.cpp
++++ b/src/uci.cpp
+@@ -230,7 +230,7 @@ string UCI::value(Value v) {
+   stringstream ss;
+ 
+   if (abs(v) < VALUE_MATE - MAX_PLY)
+-      ss << "cp " << v * 100 / PawnValueEg;
++      ss << "cpx " << v;  // avoid roundoff
+   else
+       ss << "mate " << (v > 0 ? VALUE_MATE - v + 1 : -VALUE_MATE - v) / 2;
+ 
