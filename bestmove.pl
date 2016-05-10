@@ -62,7 +62,9 @@ sub engine {
 
     &start_engine;
     #$::exp->send("ucinewgame\r");  #should do readyok after this
-    $::exp->send("position startpos moves$movelist1\rgo $timethink\r");
+    $::exp->send("position startpos moves$movelist1\rd\reval\risready\r");
+    $::exp->expect(undef,("readyok\r\n")) or die;
+    $::exp->send("go $timethink\r");
     my $successfully_matching_string;
     for(;;){
 	#($matched_pattern_position, $error, $successfully_matching_string, $before_match,       $after_match);
