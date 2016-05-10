@@ -9,7 +9,7 @@ while(<>){
     #chomp;
     s/\r?\n//;
     if(/^info depth (?<depth>\d+) seldepth \d+ multipv (?<multipv>\d+) score (?<score>.+) nodes (?<nodes>\d+) nps \d+ (?:hashfull \d+ )?tbhits \d+ time \d+ pv (?<pv>\S+)/){
-        $running{$+{multipv}}="$+{pv} $+{depth} $+{score}";
+        $running{$+{multipv}}="$+{pv} depth $+{depth} score $+{score}";
         $depth=$+{depth};
         $nodes=$+{nodes}
         #print "found pv $+{depth} $+{pv} ",scalar(%running);
@@ -25,6 +25,8 @@ while(<>){
             undef%running;
             for(sort {$a<=>$b} keys %completed){
                 print"$_ $completed{$_}";
+                die unless ($indepth) = ($completed{$_} =~ /depth (\d+)/);
+                die unless $indepth==($new-1);
             }
             print "starting depth $new nodes $nodes";
         }
