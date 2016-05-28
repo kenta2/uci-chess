@@ -44,7 +44,7 @@ for(@F){
 }
 print " ";
 if($outcome eq '1/2'){
-    print "1/2-1/2 ($draw_reason)";
+    print "1/2-1/2 {$draw_reason}";
 } else {
     print $outcome;
 }
