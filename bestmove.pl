@@ -81,18 +81,22 @@ sub engine {
         #print STDERR "gotsms $successfully_matching_string\n";
         #print "($expect_result[0],error,$expect_result[2],$expect_result[3],$expect_result[4])\n";
         if($successfully_matching_string =~ /^info depth (?<depth>\d+) seldepth \d+ multipv (?<multipv>\d+) score (?<score>.+) nodes (?<nodes>\d+) nps \d+ (?:hashfull \d+ )?tbhits \d+ time \d+ pv (?<pv>\S+)/){
-            #$running{$+{multipv}}="$+{pv} and $+{depth} $+{score}";
-            $running{$+{multipv}}=$+{pv};
-            $depth=$+{depth};
-            #$nodes=$+{nodes};
-            #print "found pv $+{depth} $+{pv} ",scalar(%running);
+            my$score=$+{score};
+            my$multipv=$+{multipv};
+            my$pv=$+{pv};
+            my$tempdepth=$+{depth};
+            unless($score =~ /(lower|upper)bound/){
+                $running{$multipv}=$pv;
+                $depth=$tempdepth;
+                print "score $score\n";
+            }
         }
         elsif ($successfully_matching_string =~ /^info depth (?<depth>\d+) currmove .+ currmovenumber (?<num>\d+)/){
             my $num=$+{num};
             my $new=$+{depth};
             if($num==1 and %running){
                 #sometimes the 1 appears twice
-                die unless $depth==($new-1);
+                die "f $depth $new" unless $depth==($new-1);
                 #$cdepth=$depth;
 
                 #we report the #1 pv of the last completed depth,
