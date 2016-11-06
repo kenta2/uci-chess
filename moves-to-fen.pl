@@ -7,8 +7,10 @@ GetOptions('fen'=>\$fen,
            'dump'=>\$dodump,
            'status'=>\$dostatus,
            'fifty'=>\$dofifty,
+           'san'=>\$dosan,
     );
 $list='';
+$san='';
 $pos=Chess::Rep->new;
 for(@ARGV){
     die unless /^\S+$/;
@@ -19,6 +21,7 @@ for(@ARGV){
         $construct.=$details->{promote};
     }
     $list.=" ".lc$construct;
+    $san.=" ".$$details{san};
 }
 if($fen){
     $_=$pos->get_fen;
@@ -29,6 +32,7 @@ if($fen){
     print "fen $_\n";
 }
 print "list",$list,"\n" if $dolist;
+print "san",$san,"\n" if $dosan;
 if($moves){
     print"moves";
     $status=$pos->status;
