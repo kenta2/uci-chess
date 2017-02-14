@@ -15,16 +15,61 @@ use Getopt::Long;
 
 sub main {
     $::command = 'stockfish';
+    my($fen,$dolist,$moves,$dostatus,$dofifty);
     GetOptions('engine=s' => \$::command,
+               'fen'=>\$fen,
+               'list'=>\$dolist,
+               'moves'=>\$moves,
+               'status'=>\$dostatus,
+               'fifty'=>\$dofifty,
         );
     #die unless @ARGV>0;
     my$list='';
     for(@ARGV){
-        die unless /^\S+$/;
+        die unless /^([a-h][1-9]){2}[bnrq]?$/;
         $list.=" $_";
     }
     #print $list;
-    &engine($list);
+    my$ans=&engine($list);
+    if($fen){
+        for($ans->{fen}){
+            s/\s+\d+$//; #discard move count
+            s/\s+\d+$//; #discard halfmove count for 50-move draw
+            s,/,.,g;
+            s/ /_/g;
+            print "fen $_\n";
+        }
+    }
+    if($dolist){
+        # no op;
+        print "list";
+        print " $_" for @ARGV;
+        print"\n";
+    }
+    if($moves){
+        print"moves";
+        print " $_" for @{$ans->{moves}};
+        print"\n";
+    }
+    if($dofifty){
+        $_=$ans->{fen};
+        my($rle,$color,$castle,$enpassant,$fifty,$movecount)=split;
+        die unless $color eq 'w' or $color='b';
+        die unless $fifty =~ /^\d+$/;
+        die unless $movecount =~ /^\d+$/;
+        print "fifty $fifty\n";
+    }
+    if($dostatus){
+        if(0==@{$ans->{moves}}){
+            if(0==$ans->{ischeck}){
+                print"stalemate\n";
+            }else{
+                die unless 1==$ans->{ischeck};
+                print "mate\n";
+            }
+        }
+    }
+
 }
 
 sub start_engine {
@@ -45,11 +90,12 @@ sub engine {
     my $movelist1=shift;
 
     &start_engine;
+    my%ans;
     #$::exp->send("ucinewgame\r");  #should do readyok after this
     $::exp->send("position startpos moves$movelist1\r");
     $::exp->send("d\r");
     my@expect_result=$::exp->expect(undef,'-re','Fen: .*?\n') or die;
-    my $fen=$expect_result[2];
+    $ans{fen}=$expect_result[2];
     @expect_result=$::exp->expect(undef,'-re','Checkers:.*?\n') or die;
     my $ischeck=$expect_result[2];
     $::exp->send("perft 1\r");
@@ -73,21 +119,24 @@ sub engine {
     $::exp->expect(undef,'-re','Nodes/second\s*:\s*\d+\s*\r\n') or die;
     $::exp->send("quit\r");
     $::exp->expect(undef);
-    $fen =~ s/\s*$//;
+    $ans{fen} =~ s/\s*$//;
+    $ans{fen} =~ s/^Fen:\s*// or die;
     die unless @moves==$count;
 
     for($ischeck){
         s/^Checkers://;
     }
     if ($ischeck =~ /\S/) {
-        $ischeck=1;
+        $ans{ischeck}=1;
     } else {
-        $ischeck=0;
+        $ans{ischeck}=0;
     }
-    print "$fen ";
-    print "ischeck $ischeck MOVES";
-    for(@moves){
-        print " $_";
-    }
-    print"\n";
+    $ans{moves}=\@moves;
+    #print "$ans{fen} ";
+    #print "ischeck $ans{ischeck} MOVES";
+    #for(@moves){
+    #    print " $_";
+    #}
+    #print"\n";
+    \%ans;
 }
