@@ -1,5 +1,9 @@
 #!perl -w
 
+#this does calculations via stockfish instead of Chess::Rep.
+# good = Chess960
+# bad = no SAN
+
 #things needed: is it checkmate or stalemate?
 # a way to get them all in long algebraic notation.  easy if you never leave it.
 # fen after a giving sequence of moves
