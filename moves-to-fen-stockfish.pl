@@ -48,16 +48,16 @@ sub engine {
     #$::exp->send("ucinewgame\r");  #should do readyok after this
     $::exp->send("position startpos moves$movelist1\r");
     $::exp->send("d\r");
-    my@expect_result=$::exp->expect(99,'-re','Fen: .*?\n') or die;
+    my@expect_result=$::exp->expect(undef,'-re','Fen: .*?\n') or die;
     my $fen=$expect_result[2];
-    @expect_result=$::exp->expect(99,'-re','Checkers:.*?\n') or die;
+    @expect_result=$::exp->expect(undef,'-re','Checkers:.*?\n') or die;
     my $ischeck=$expect_result[2];
     $::exp->send("perft 1\r");
     #benchmark.cpp
-    $::exp->expect(99,'Position: 1/1')or die;
+    $::exp->expect(undef,'Position: 1/1')or die;
     my@moves;
     for(;;){
-        @expect_result=$::exp->expect(99,'-re','\S+?: 1\r\n','-re','={27}.*\n') or die;
+        @expect_result=$::exp->expect(undef,'-re','\S+?: 1\r\n','-re','={27}.*\n') or die;
         my $item=$expect_result[2];
         if($item =~/(.*): 1/){
             push@moves,$1;
@@ -67,10 +67,15 @@ sub engine {
             die;
         }
     }
-    $::exp->expect(99,'-re','Nodes/second\s*:\s*\d+\s*\r\n') or die;
+    @expect_result=$::exp->expect(00,'-re','Nodes searched\s*:\s*\d+\r\n') or die;
+    die unless $expect_result[2]=~/Nodes searched\s*:\s*(\d+)/;
+    my$count=$1;
+    $::exp->expect(undef,'-re','Nodes/second\s*:\s*\d+\s*\r\n') or die;
     $::exp->send("quit\r");
     $::exp->expect(undef);
     $fen =~ s/\s*$//;
+    die unless @moves==$count;
+
     for($ischeck){
         s/^Checkers://;
     }
@@ -79,7 +84,7 @@ sub engine {
     } else {
         $ischeck=0;
     }
-    print "$fen/\n";
+    print "$fen\n";
     print "ischeck $ischeck\n";
     print "moves";
     for(@moves){
