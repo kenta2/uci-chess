@@ -1,5 +1,13 @@
 #!perl -w
-# perl bestmove.pl --multipv --log=... --hash=5000 "nodes 10000000" e2e4
+
+#things needed: is it checkmate or stalemate?
+# a way to get them all in long algebraic notation.  easy if you never leave it.
+# fen after a giving sequence of moves
+# is it fifty move draw?
+# somewhat uselessly, we can get the available moves in SAN, though maybe patching can avoid that. seems to be removed? now in the perft 1 command which does not do SAN
+# we can also get whether the king is in check via the "Checkers:" line
+# perft gives number of moves available, so combined with above, will give us stalemate
+
 use Expect;
 use strict;
 use Getopt::Long;
@@ -8,125 +16,74 @@ use Getopt::Long;
 sub main {
     $::command = 'stockfish';
     GetOptions('engine=s' => \$::command,
-               'threads=i' => \$::threads,
-               'verbose'=>\$::verbose,
-               'log=s'=>\$::logfile,
-               'multipv'=>\$::multipv,
-               'hash=i'=>\$::hashsize
         );
-    die unless @ARGV>0;
-    my$timethink=shift@ARGV;
-    #print $timethink;
+    #die unless @ARGV>0;
     my$list='';
     for(@ARGV){
         die unless /^\S+$/;
         $list.=" $_";
     }
     #print $list;
-    print &engine($list,$timethink),"\n";
+    &engine($list);
 }
 
 sub start_engine {
     $::exp=Expect -> spawn($::command)
         or die;
-    unless($::verbose){
-        $::exp->log_stdout(0);
-    }
-    if($::logfile){
-        $::exp->log_file($::logfile);
-    }
+    $::exp->log_stdout(0);
+
     #getting these line endings wrong results in very confusing behavior
     #the line endings also depend on the -l switch to perl
     $::exp->expect(15, ("\r\n")) or die;
     $::exp->send("uci\r");
     $::exp->expect(5,("uciok\r\n")) or die;
-    if($::threads){
-        $::exp->send("setoption name Threads value $::threads\r");
-    }
-    if($::hashsize){
-        $::exp->send("setoption name Hash value $::hashsize\r");
-    }
-    $::exp->send("setoption name Clear Hash\r");
-    if($::multipv){
-        $::exp->send("setoption name MultiPV value 400\r");
-    }
-    $::exp->send("isready\r");
-    #weirdly, stockfish occasionally dies here
-    $::exp->expect(undef,("readyok\r\n")) or die;
     $::exp->send("ucinewgame\risready\r");
     $::exp->expect(undef,("readyok\r\n")) or die;
 }
 
 sub engine {
     my $movelist1=shift;
-    my $timethink=shift;
 
     &start_engine;
     #$::exp->send("ucinewgame\r");  #should do readyok after this
-    $::exp->send("position startpos moves$movelist1\rd\reval\risready\r");
-    $::exp->expect(undef,("readyok\r\n")) or die;
-    $::exp->send("go $timethink\r");
-    my $successfully_matching_string;
-    my %running;
-    my %completed;
-    my $depth;
+    $::exp->send("position startpos moves$movelist1\r");
+    $::exp->send("d\r");
+    my@expect_result=$::exp->expect(99,'-re','Fen: .*?\n') or die;
+    my $fen=$expect_result[2];
+    @expect_result=$::exp->expect(99,'-re','Checkers:.*?\n') or die;
+    my $ischeck=$expect_result[2];
+    $::exp->send("perft 1\r");
+    #benchmark.cpp
+    $::exp->expect(99,'Position: 1/1')or die;
+    my@moves;
     for(;;){
-        #($matched_pattern_position, $error, $successfully_matching_string, $before_match,       $after_match);
-        #the ordering of the expect clauses matter.
-        # sometimes the event loop sees the sum of two lines at once.
-        # in which case, $after cycles to $current in the next cycle
-        my@expect_result=$::exp->expect(undef,("-re",'info .*?\n',"-re",'^bestmove.*?\n')) or die;
-        #loop on all the info output to avoid filling the buffer
-        $successfully_matching_string=$expect_result[2];
-        #print STDERR "gotsms $successfully_matching_string\n";
-        #print "($expect_result[0],error,$expect_result[2],$expect_result[3],$expect_result[4])\n";
-        if($successfully_matching_string =~ /^info depth (?<depth>\d+) seldepth \d+ multipv (?<multipv>\d+) score (?<score>.+) nodes (?<nodes>\d+) nps \d+ (?:hashfull \d+ )?tbhits \d+ time \d+ pv (?<pv>\S+)/){
-            my$score=$+{score};
-            my$multipv=$+{multipv};
-            my$pv=$+{pv};
-            my$tempdepth=$+{depth};
-            unless($score =~ /(lower|upper)bound/){
-                $running{$multipv}=$pv;
-                $depth=$tempdepth;
-                print "score $score\n";
-            }
-        }
-        elsif ($successfully_matching_string =~ /^info depth (?<depth>\d+) currmove .+ currmovenumber (?<num>\d+)/){
-            my $num=$+{num};
-            my $new=$+{depth};
-            if($num==1 and %running){
-                #sometimes the 1 appears twice
-                die "f $depth $new" unless $depth==($new-1);
-                #$cdepth=$depth;
-
-                #we report the #1 pv of the last completed depth,
-                #because multipv is otherwise weird and the final
-                #bestmove cannot be trusted.
-                %completed=%running;
-                undef%running;
-                #for(sort {$a<=>$b} keys %completed){ print"$_ $completed{$_}"; "reset $new";
-            }
-        }elsif ($successfully_matching_string =~ /^info nodes \d+ time \d+/){
-            # this happens once just at the end
-        }elsif ($successfully_matching_string eq "info depth 0 score mate 0\r\n") {
-            #when you give it a mate position
-        }else {
-            #print "last $successfully_matching_string";
-            die unless $successfully_matching_string =~ /^bestmove/;
-            last
+        @expect_result=$::exp->expect(99,'-re','\S+?: 1\r\n','-re','={27}.*\n') or die;
+        my $item=$expect_result[2];
+        if($item =~/(.*): 1/){
+            push@moves,$1;
+        } elsif($item =~ /^={27}/){
+            last;
+        } else {
+            die;
         }
     }
-    die unless $successfully_matching_string=~/^bestmove (\S+)/;
-    my $computermove=$1;
+    $::exp->expect(99,'-re','Nodes/second\s*:\s*\d+\s*\r\n') or die;
     $::exp->send("quit\r");
     $::exp->expect(undef);
-    if($::multipv){
-        #print "got here\n";
-        if(defined$completed{1}){
-            $computermove=$completed{1}
-        } else {
-            die unless $computermove eq '(none)'
-        }
+    $fen =~ s/\s*$//;
+    for($ischeck){
+        s/^Checkers://;
     }
-    $computermove;
+    if ($ischeck =~ /\S/) {
+        $ischeck=1;
+    } else {
+        $ischeck=0;
+    }
+    print "$fen/\n";
+    print "ischeck $ischeck\n";
+    print "moves";
+    for(@moves){
+        print " $_";
+    }
+    print"\n";
 }
