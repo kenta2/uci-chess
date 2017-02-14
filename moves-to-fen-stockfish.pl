@@ -84,9 +84,8 @@ sub engine {
     } else {
         $ischeck=0;
     }
-    print "$fen\n";
-    print "ischeck $ischeck\n";
-    print "moves";
+    print "$fen ";
+    print "ischeck $ischeck MOVES";
     for(@moves){
         print " $_";
     }
