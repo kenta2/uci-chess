@@ -111,7 +111,7 @@ sub engine {
             $maxnodes=$nodes;
         }elsif ($successfully_matching_string eq "info depth 0 score mate 0\r\n") {
             #when you give it a mate position
-        }elsif ($successfully_matching_string eq "info depth 0 score cp 0\r\n") {
+        }elsif ($successfully_matching_string =~ /^info depth 0 score cpx? 0/) {
             #stalemate position
         }elsif ($successfully_matching_string =~ /^bestmove/){
             last;
