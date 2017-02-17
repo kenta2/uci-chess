@@ -1,7 +1,9 @@
 #!perl -wl
 use BerkeleyDB;
+#mkdir run/.. bdb log queue
 #perl mainline-init.pl (moves)
-#time while perl mainline.pl "nodes 100000" ; do : ; done
+
+#time while nice -19 perl mainline.pl [1...] ; do if [ -e stop ] ; then break ; fi ; done
 
 #Warning: it is fairly easy to exceed the maximum number of inodes (df -i).
 #Future: consider BerkeleyDB or sqlite.
@@ -9,9 +11,8 @@ use BerkeleyDB;
 use Chess::Rep;
 use Time::HiRes;
 
-#timethink ought to be initialized in mainline-init and stored in the queue
 die unless defined ($tartag=shift@ARGV);
-$timethink='nodes 12345678'; #hard code this so that sits in version control
+$timethink='nodes 30000'; #hard code this so that sits in version control
 #print "timethink $timethink";
 
 $env = new BerkeleyDB::Env (
@@ -28,7 +29,7 @@ die unless defined($env);
 for$i(1..100){
     @queue=(<run/queue/*>);
     last if @queue;
-    print "waiting $i for queue";
+    #print "waiting $i for queue";
     &nanopause;
 }
 unless(@queue){
