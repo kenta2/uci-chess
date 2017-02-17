@@ -88,7 +88,7 @@ sub engine {
             unless($score =~ /(lower|upper)bound/){
                 $running{$multipv}=$pv;
                 $depth=$tempdepth;
-                print "score $score\n";
+                #print "score $score\n";
             }
         }
         elsif ($successfully_matching_string =~ /^info depth (?<depth>\d+) currmove .+ currmovenumber (?<num>\d+)/){
