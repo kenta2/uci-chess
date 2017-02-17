@@ -23,7 +23,8 @@ sub main {
         $list.=" $_";
     }
     #print $list;
-    print &engine($list,$timethink),"\n";
+    my$answer=&engine($list,$timethink);
+    print "$answer\n";
 }
 
 sub start_engine {
@@ -67,9 +68,11 @@ sub engine {
     $::exp->expect(undef,("readyok\r\n")) or die;
     $::exp->send("go $timethink\r");
     my $successfully_matching_string;
-    my %running;
-    my %completed;
-    my $depth;
+    my%seen;
+    my $largest=0;
+    my $deepest=0;
+    my $maxnodes=0;
+    my%scores;
     for(;;){
         #($matched_pattern_position, $error, $successfully_matching_string, $before_match,       $after_match);
         #the ordering of the expect clauses matter.
@@ -80,40 +83,40 @@ sub engine {
         $successfully_matching_string=$expect_result[2];
         #print STDERR "gotsms $successfully_matching_string\n";
         #print "($expect_result[0],error,$expect_result[2],$expect_result[3],$expect_result[4])\n";
-        if($successfully_matching_string =~ /^info depth (?<depth>\d+) seldepth \d+ multipv (?<multipv>\d+) score (?<score>.+) nodes (?<nodes>\d+) nps \d+ (?:hashfull \d+ )?tbhits \d+ time \d+ pv (?<pv>\S+)/){
-            my$score=$+{score};
-            my$multipv=$+{multipv};
-            my$pv=$+{pv};
-            my$tempdepth=$+{depth};
-            unless($score =~ /(lower|upper)bound/){
-                $running{$multipv}=$pv;
-                $depth=$tempdepth;
-                #print "score $score\n";
+        my($depth,$multipv,$score,$nodes,$pv);
+        if(($depth,$multipv,$score,$nodes,$pv)=($successfully_matching_string =~ /^info depth (\d+) seldepth \d+ multipv (\d+) score (.+) nodes (\d+) nps \d+ (?:hashfull \d+ )?tbhits \d+ time \d+ pv (\S+)/)){
+            if($multipv>$largest){
+                $largest=$multipv;
             }
+            if($depth>$deepest){
+                $deepest=$depth;
+            }
+            #do we care if $score =~ /(lower|upper)bound/ ?
+            $seen{"$depth $multipv"}=$pv;
+            $scores{"$depth $multipv"}=$score;
+            # could also store score
+            die if $nodes<$maxnodes;
+            $maxnodes=$nodes;
         }
-        elsif ($successfully_matching_string =~ /^info depth (?<depth>\d+) currmove .+ currmovenumber (?<num>\d+)/){
-            my $num=$+{num};
-            my $new=$+{depth};
-            if($num==1 and %running){
-                #sometimes the 1 appears twice
-                die "f $depth $new" unless $depth==($new-1);
-                #$cdepth=$depth;
-
-                #we report the #1 pv of the last completed depth,
-                #because multipv is otherwise weird and the final
-                #bestmove cannot be trusted.
-                %completed=%running;
-                undef%running;
-                #for(sort {$a<=>$b} keys %completed){ print"$_ $completed{$_}"; "reset $new";
+        elsif (($depth,$multipv)=($successfully_matching_string=~/^info depth (\d+) currmove .+ currmovenumber (\d+)/)){
+            if($multipv>$largest){
+                $largest=$1;
             }
-        }elsif ($successfully_matching_string =~ /^info nodes \d+ time \d+/){
+            if($depth>$deepest){
+                $deepest=$depth;
+            }
+        }elsif (($nodes)=($successfully_matching_string =~ /^info nodes \d+ time \d+/)){
             # this happens once just at the end
+            die if $nodes<$maxnodes;
+            $maxnodes=$nodes;
         }elsif ($successfully_matching_string eq "info depth 0 score mate 0\r\n") {
             #when you give it a mate position
+        }elsif ($successfully_matching_string eq "info depth 0 score cp 0\r\n") {
+            #stalemate position
+        }elsif ($successfully_matching_string =~ /^bestmove/){
+            last;
         }else {
-            #print "last $successfully_matching_string";
-            die unless $successfully_matching_string =~ /^bestmove/;
-            last
+            die "bad line $successfully_matching_string";
         }
     }
     die unless $successfully_matching_string=~/^bestmove (\S+)/;
@@ -121,9 +124,21 @@ sub engine {
     $::exp->send("quit\r");
     $::exp->expect(undef);
     if($::multipv){
-        #print "got here\n";
-        if(defined$completed{1}){
-            $computermove=$completed{1}
+        #we do not trust the "bestmove" output with multipv.
+        #Instead, explicitly choose the highest ranked move of the last completed depth.
+        if ($largest>0){
+            unless(defined$seen{"$deepest $largest"}){
+                $deepest--;
+                #incomplete final depth
+            }
+            die unless $deepest>0;
+            die unless defined $seen{"$deepest $largest"};
+            die unless defined $seen{"$deepest 1"};
+            $computermove=$seen{"$deepest 1"};
+            if($::verbose){
+                print"verbose deepest $deepest largest $largest score ",$scores{"$deepest 1"}," maxnodes $maxnodes\n";
+            }
+
         } else {
             die unless $computermove eq '(none)'
         }
