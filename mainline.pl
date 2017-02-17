@@ -1,4 +1,5 @@
 #!perl -wl
+use BerkeleyDB;
 #perl mainline-init.pl (moves)
 #time while perl mainline.pl "nodes 100000" ; do : ; done
 
@@ -9,8 +10,20 @@ use Chess::Rep;
 use Time::HiRes;
 
 #timethink ought to be initialized in mainline-init and stored in the queue
-die unless defined ($timethink=shift@ARGV);
-print "timethink $timethink";
+die unless defined ($tartag=shift@ARGV);
+$timethink='nodes 12345678'; #hard code this so that sits in version control
+#print "timethink $timethink";
+
+$env = new BerkeleyDB::Env (
+    -Home => 'run/bdb', # add timethink later?
+    -Flags => DB_CREATE | DB_INIT_CDB | DB_INIT_MPOOL
+    ) or die "cannot env: $BerkeleyDB::Error";
+
+die unless defined($env);
+
+# The number of tips, i.e., queue entries, is likely to remain in the
+# thousands at most so no need to do BerkeleyDB, though the Recno
+# database type looks promising, with DB_APPEND and compact
 
 for$i(1..100){
     @queue=(<run/queue/*>);
@@ -24,7 +37,7 @@ unless(@queue){
 #randomization to somewhat soften race conditions
 $i=int rand@queue;
 $file=$queue[$i];
-print "file $file";
+#print "file $file";
 die unless ($base)=($file=~m,run/queue/(.*),);
 ($fiftyfen)=($base=~/_(\d+$)/) or $fiftyfen=0;  #preserve ability to use fifty-move draw if we bring it back
 
@@ -45,42 +58,57 @@ unless (($list)=/^proof(.*)/){
     &nanopause;
     exit;
 }
-print"moves$list";
+{
+    @F=split for($list);
+    for(@F){
+        die "bad move $_" unless /^([a-h][1-8]){2}[nbrq]?$/;
+    }
+}
+#print"moves$list";
 die unless `perl moves-to-fen.pl --fifty $list` =~ /fifty (\d+)/;
 $fiftyproof=$1;
 
-($dbdir="run/db/$timethink")=~s/ /_/g;;
-mkdir $dbdir unless -e $dbdir;
-$db="$dbdir/$base";
+my $db=BerkeleyDB::Btree->new (
+    -Filename => 'positions.db',
+    -Flags => DB_CREATE,
+    -Env => $env
+) or die "cannot open it $BerkeleyDB::Error";
+
+# key=$base
 if($fiftyfen>=2*50){
-    unless(-e $db){
-        open FO,">$db" or die;
-        print FO "draw fifty by fen" or die;
-        close FO or die;
-    }
+    $status=$db->db_put($base,"draw fifty by fen",DB_NOOVERWRITE);
+    die "fiftyfen $status" unless ($status==0 or $status==DB_KEYEXIST);
+    print "fiftyfen already" if$status;
 } elsif($fiftyproof>=2*50){
-    unless(-e $db){
-        open FO,">$db" or die;
-        print FO "draw fifty by proof game" or die;
-        close FO or die;
-    }
-} elsif(-e $db) {
-    print "already db";
+    $status=$db->db_put($base,"draw fifty by proof game",DB_NOOVERWRITE);
+    die "fiftyproof $status" unless ($status==0 or $status==DB_KEYEXIST);
+    print "fiftyproof already" if$status;
+} elsif($db->db_get($base,$value)==0){
+    print "already db $base $value." if 0;
 } else {
-    open FO,">$db" or die;
-    close FO or die; #empty file marks calculation in progress
-    for my$retries(1..10000){
-        $logfile="$db.$$.log";
-        $_=`perl bestmove.pl --log=$logfile "$timethink" $list`;
+    $status=$db->db_put($base,""); #empty file marks calculation in progress
+    die "empty put $status" unless $status==0;
+    for my$retries(1..1){
+        $logfile="run/log/$base.$$.log";
+        $command=qq(perl bestmove.pl --multipv --log=$logfile "$timethink" $list);
+        #print "command =$command";
+        $_=`$command`;
         system "bzip2",$logfile;
+        $logfile.='.bz2';
+        ($slog=$logfile)=~s,^run/,, or die;
+        unless(system 'tar','rf',"run/log/$tartag.tar",'-C','run',$slog){
+            unlink "$logfile";
+        } else {
+            print "tar error $?";
+        }
+        # xxx add to tar
         chomp;
         last if /\S/;
         print " (retry)";
     }
+    #print "bestmove=$_";
     die unless /\S/; #too many retries
-    open FO,">$db" or die;
-    print FO "bestmove $_";
-    close FO;
+    $status=$db->db_put($base,"$_");
     if($_ eq '(none)'){
         die unless `perl moves-to-fen.pl --status $list` =~ /mate/;
     } else {
@@ -94,9 +122,10 @@ if($fiftyfen>=2*50){
         die unless $fen;
         $fen="run/queue/$fen";
         if (-e $fen){
-            print "transposition";
+            #print "transposition";
         } else {
-            print "new $fen";
+            #print "new $fen";
+            #race condition possible here...
             open FO,">$fen" or die;
             print FO "proof$list";
             close FO or die;
