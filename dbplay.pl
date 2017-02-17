@@ -2,11 +2,19 @@
 # play through using only the database.  same input arguments as db-available, similar output as selfplay
 use strict;
 use Chess::Rep;
+use BerkeleyDB;
 
 my$pos=Chess::Rep->new;
 my$command='perl moves-to-fen.pl --list';
-my $db=shift@ARGV;
-die unless defined($db);
+my $envdir=shift@ARGV;
+die unless defined($envdir);
+my$env = new BerkeleyDB::Env (
+    -Home => $envdir,
+    -Flags => DB_INIT_CDB | DB_INIT_MPOOL ) or die "cannot env: $BerkeleyDB::Error";
+
+my$db=BerkeleyDB::Btree->new ( -Flags => DB_RDONLY , -Filename => 'positions.db', -Env => $env ) or die "$BerkeleyDB::Error";
+
+
 my$san="";
 for(@ARGV){
     die unless /^\S+$/;
@@ -34,21 +42,12 @@ for(my$i=0;;++$i){
     $fen=~s/\s+\d+$//; #discard halfmove count for 50-move draw
     $fen=~s,/,.,g;
     $fen=~s/ /_/g;
-    open FI,"$db/$fen" or die;
-    die unless defined($_=<FI>);
-    chomp;
-    if(/^bestmove (.*)/){
-        $_=$1;
+    my$status=$db->db_get($fen,$_);
+    die if $status;
+    if(/^[a-h][1-8][a-h][1-8][nbrq]?$/){
         print " $_";
-    } else {
-        # this branch tends never to be taken because it
-        # will get caught by the internal check for the 50-move rule first.
-        print "\n$_\n";
-        die unless /^draw/;
-        $outcome=$DRAW;
-        last;
     }
-    if($_ eq '(none)'){
+    elsif($_ eq '(none)'){
         print "\n";
         if($pos->status->{mate}){
             #print $pos->dump_pos,"\n";
@@ -65,6 +64,13 @@ for(my$i=0;;++$i){
             die;
         }
         print"\n";
+        last;
+    } else {
+        # this branch tends never to be taken because it
+        # will get caught by the internal check for the 50-move rule first.
+        print "\n$_\n";
+        die "bad $_" unless /^draw/;
+        $outcome=$DRAW;
         last;
     }
     $list .= " $_";
