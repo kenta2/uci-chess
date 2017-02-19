@@ -12,16 +12,16 @@ sub main {
                'verbose'=>\$::verbose,
                'log=s'=>\$::logfile,
                'multipv'=>\$::multipv,
+               'chess960'=>\$::chess960,
                'hash=i'=>\$::hashsize
         );
     die unless @ARGV>0;
     my$timethink=shift@ARGV;
     #print $timethink;
-    my$list='';
-    for(@ARGV){
-        die unless /^\S+$/;
-        $list.=" $_";
-    }
+    my$list = join ' ',@ARGV;
+    unshift @ARGV,'--chess960' if $::chess960;
+    #validate
+    die if system('perl','moves-to-fen-stockfish.pl',@ARGV);
     #print $list;
     my$answer=&engine($list,$timethink);
     print "$answer\n";
@@ -51,6 +51,9 @@ sub start_engine {
     if($::multipv){
         $::exp->send("setoption name MultiPV value 400\r");
     }
+    if($::chess960){
+        $::exp->send("setoption name UCI_Chess960 value true\r");
+    }
     $::exp->send("isready\r");
     #weirdly, stockfish occasionally dies here
     $::exp->expect(undef,("readyok\r\n")) or die;
@@ -63,8 +66,7 @@ sub engine {
     my $timethink=shift;
 
     &start_engine;
-    #$::exp->send("ucinewgame\r");  #should do readyok after this
-    $::exp->send("position startpos moves$movelist1\rd\reval\risready\r");
+    $::exp->send("position $movelist1\rd\reval\risready\r");
     $::exp->expect(undef,("readyok\r\n")) or die;
     $::exp->send("go $timethink\r");
     my $successfully_matching_string;

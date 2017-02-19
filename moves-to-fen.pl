@@ -27,6 +27,8 @@ if($fen){
     $_=$pos->get_fen;
     s/\s+\d+$//; #discard move count
     s/\s+\d+$//; #discard halfmove count for 50-move draw
+    s/\s+\S+$//; #discard en passant square
+    # this is somewhat of a hack to work around Chess::Rep and Stockfish disagreeing on en passant square in FEN
     s,/,.,g;
     s/ /_/g;
     print "fen $_\n";

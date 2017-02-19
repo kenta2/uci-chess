@@ -40,10 +40,13 @@ for(my$i=0;;++$i){
     my$fen=$pos->get_fen;
     $fen=~s/\s+\d+$//; #discard move count
     $fen=~s/\s+\d+$//; #discard halfmove count for 50-move draw
+    $fen=~s/\s+\S+$// or die; #discard en passant square
+    # this is somewhat of a hack to work around Chess::Rep and Stockfish disagreeing on en passant square in FEN
+
     $fen=~s,/,.,g;
     $fen=~s/ /_/g;
     my$status=$db->db_get($fen,$_);
-    die if $status;
+    die "failed $fen,$status" if $status;
     if(/^[a-h][1-8][a-h][1-8][nbrq]?$/){
         print " $_";
     }

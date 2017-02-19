@@ -14,5 +14,5 @@ die unless $fen;
 $fen="run/queue/$fen";
 die "already exists $fen" if -e $fen;
 open FO,">$fen" or die "cannot open $fen for writing";
-print FO "proof$list";
-close FO;
+print FO "startpos moves$list EOF" or die;
+close FO or die;

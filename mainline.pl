@@ -40,6 +40,7 @@ $i=int rand@queue;
 $file=$queue[$i];
 #print "file $file";
 die unless ($base)=($file=~m,run/queue/(.*),);
+#currently the following is not used
 ($fiftyfen)=($base=~/_(\d+$)/) or $fiftyfen=0;  #preserve ability to use fifty-move draw if we bring it back
 
 #avoid race condition
@@ -51,23 +52,31 @@ unless (open FI,$file) {
 unless(defined($_=<FI>)){
     print "failed to read a line";
     &nanopause;
-    exit;
+    die;
 }
 close FI;
-unless (($list)=/^proof(.*)/){
-    print "line has wrong format: $_";
+chomp;
+unless (s/ EOF$//){
+    #guard against partially written files.
     &nanopause;
-    exit;
+    die;
 }
-{
-    @F=split for($list);
-    for(@F){
-        die "bad move $_" unless /^([a-h][1-8]){2}[nbrq]?$/;
-    }
+if (/^chess960 (.+)/){
+    $list = $1;
+    $chess960='--chess960';
+}else {
+    $list=$_;
+    $chess960='';
 }
 #print"moves$list";
-die unless `perl moves-to-fen.pl --fifty $list` =~ /fifty (\d+)/;
-$fiftyproof=$1;
+$moves_to_fen="perl moves-to-fen-stockfish.pl $chess960";
+if(`$moves_to_fen --fifty $list` =~ /fifty (\d+)/){
+    $fiftyproof=$1;
+} else {
+    # perhaps race condition of a file being half written
+    &nanopause;
+    die;
+}
 
 my $db=BerkeleyDB::Btree->new (
     -Filename => 'positions.db',
@@ -91,7 +100,7 @@ if($fiftyfen>=2*50){
     die "empty put $status" unless $status==0;
     for my$retries(1..1){
         $logfile="run/log/$base.$$.log";
-        $command=qq(perl bestmove.pl --multipv --log=$logfile "$timethink" $list);
+        $command=qq(perl bestmove.pl --multipv --log=$logfile $chess960 "$timethink" $list);
         #print "command =$command";
         $_=`$command`;
         system "bzip2",$logfile;
@@ -109,17 +118,15 @@ if($fiftyfen>=2*50){
     }
     #print "bestmove=$_";
     die unless /\S/; #too many retries
-    $status=$db->db_put($base,"$_");
+    $status=$db->db_put($base,$_);
     if($_ eq '(none)'){
-        die unless `perl moves-to-fen.pl --status $list` =~ /mate/;
+        die unless `$moves_to_fen --status $list` =~ /mate/;
     } else {
         $list.=" $_";
-        open FI,"perl moves-to-fen.pl --fen $list |" or die;
-        undef$fen;
-        while(<FI>){
-            chomp;
-            $fen=$1 if /^fen (.*)/;
-        }
+        #print STDERR $list;
+        $fen=`$moves_to_fen --fen $list`;
+        chomp$fen;
+        $fen=~ s/^fen // or die;
         die unless $fen;
         $fen="run/queue/$fen";
         if (-e $fen){
@@ -128,7 +135,8 @@ if($fiftyfen>=2*50){
             #print "new $fen";
             #race condition possible here...
             open FO,">$fen" or die;
-            print FO "proof$list";
+            $list="chess960 $list" if $chess960;
+            print FO "$list EOF" or die;
             close FO or die;
         }
     }
