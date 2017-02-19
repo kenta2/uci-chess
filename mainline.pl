@@ -12,7 +12,7 @@ use Chess::Rep;
 use Time::HiRes;
 
 die unless defined ($tartag=shift@ARGV);
-$timethink='nodes 30000'; #hard code this so that sits in version control
+$timethink='nodes 500000000'; #hard code this so that sits in version control
 #print "timethink $timethink";
 
 $env = new BerkeleyDB::Env (
@@ -102,7 +102,7 @@ if($fiftyfen>=2*50){
     die "empty put $base $status" unless $status==0;
     for my$retries(1..10){
         $logfile="run/log/$base.$$.log";
-        $command=qq(perl bestmove.pl --multipv --log=$logfile $chess960 "$timethink" $list);
+        $command=qq(perl bestmove.pl --hash=3000 --multipv --log=$logfile $chess960 "$timethink" $list);
         #print "command =$command";
         $_=`$command`;
         system "bzip2",$logfile;
