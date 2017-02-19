@@ -12,7 +12,10 @@ while(<FI>){
 die unless defined($list);
 die unless $fen;
 $fen="run/queue/$fen";
-die "already exists $fen" if -e $fen;
+if(-e $fen){
+    print "already exists $fen";
+    exit
+}
 open FO,">$fen" or die "cannot open $fen for writing";
 print FO "startpos moves$list EOF" or die;
 close FO or die;
