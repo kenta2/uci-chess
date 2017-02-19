@@ -6,7 +6,9 @@ die unless defined$ARGV[0];
 #test whether database corruption happens when running without transactions or locks
 $env = new BerkeleyDB::Env (
     -Home => $ARGV[0],
-    -Flags => DB_INIT_CDB | DB_INIT_MPOOL ) or die "cannot env: $BerkeleyDB::Error";
+    #-Flags => DB_INIT_CDB | DB_INIT_MPOOL
+    -Flags => DB_INIT_TXN | DB_INIT_LOCK | DB_INIT_MPOOL
+    ) or die "cannot env: $BerkeleyDB::Error";
 
 $db=BerkeleyDB::Btree->new ( -Flags => DB_RDONLY , -Filename => 'positions.db', -Env => $env ) or die "$BerkeleyDB::Error";
 my$v;

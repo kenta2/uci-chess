@@ -16,8 +16,9 @@ $timethink='nodes 30000'; #hard code this so that sits in version control
 #print "timethink $timethink";
 
 $env = new BerkeleyDB::Env (
-    -Home => 'run/bdb', # add timethink later?
-    -Flags => DB_CREATE | DB_INIT_CDB | DB_INIT_MPOOL
+    -Home => 'run/bdb',
+    -Flags => DB_INIT_TXN | DB_INIT_LOCK | DB_INIT_LOG | DB_INIT_MPOOL,
+    -TxMax => 40 # default 20 is just on the edge
     ) or die "cannot env: $BerkeleyDB::Error";
 
 die unless defined($env);
@@ -81,7 +82,7 @@ if(`$moves_to_fen --fifty $list` =~ /fifty (\d+)/){
 
 my $db=BerkeleyDB::Btree->new (
     -Filename => 'positions.db',
-    -Flags => DB_CREATE,
+    -Flags => DB_AUTO_COMMIT,
     -Env => $env
 ) or die "cannot open it ($tartag) $BerkeleyDB::Error";
 
@@ -143,6 +144,7 @@ if($fiftyfen>=2*50){
     }
 }
 #this can fail via race conditions but that is OK
+undef $db;
 unlink $file;
 
 sub nanopause {

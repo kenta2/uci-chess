@@ -10,7 +10,9 @@ my $envdir=shift@ARGV;
 die unless defined($envdir);
 my$env = new BerkeleyDB::Env (
     -Home => $envdir,
-    -Flags => DB_INIT_CDB | DB_INIT_MPOOL ) or die "cannot env: $BerkeleyDB::Error";
+    #-Flags => DB_INIT_CDB | DB_INIT_MPOOL
+    -Flags => DB_INIT_TXN | DB_INIT_LOCK | DB_INIT_MPOOL
+    ) or die "cannot env: $BerkeleyDB::Error";
 
 my$db=BerkeleyDB::Btree->new ( -Flags => DB_RDONLY , -Filename => 'positions.db', -Env => $env ) or die "$BerkeleyDB::Error";
 
