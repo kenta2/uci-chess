@@ -1,9 +1,11 @@
 #! perl -wl
 use BerkeleyDB;
 
+die unless defined$ARGV[0];
+
 #test whether database corruption happens when running without transactions or locks
 $env = new BerkeleyDB::Env (
-    -Home => 'run/bdb',
+    -Home => $ARGV[0],
     -Flags => DB_INIT_CDB | DB_INIT_MPOOL ) or die "cannot env: $BerkeleyDB::Error";
 
 $db=BerkeleyDB::Btree->new ( -Flags => DB_RDONLY , -Filename => 'positions.db', -Env => $env ) or die "$BerkeleyDB::Error";
