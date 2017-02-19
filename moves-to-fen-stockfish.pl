@@ -24,6 +24,7 @@ use Getopt::Long;
 
 sub main {
     $::command = 'stockfish';
+    $::TIMEOUT = 99;
     my($fen,$dolist,$moves,$dostatus,$dofifty);
     GetOptions('engine=s' => \$::command,
                'fen'=>\$fen,
@@ -141,12 +142,12 @@ sub start_engine {
 
     #getting these line endings wrong results in very confusing behavior
     #the line endings also depend on the -l switch to perl
-    $::exp->expect(15, ("\r\n")) or die;
+    $::exp->expect($::TIMEOUT, ("\r\n")) or die;
     $::exp->send("uci\r");
-    $::exp->expect(5,("uciok\r\n")) or die;
+    $::exp->expect($::TIMEOUT,("uciok\r\n")) or die;
     $::exp->send("setoption name UCI_Chess960 value true\r") if $::chess960;
     $::exp->send("ucinewgame\risready\r");
-    $::exp->expect(undef,("readyok\r\n")) or die;
+    $::exp->expect($::TIMEOUT,("readyok\r\n")) or die;
 }
 
 sub engine {
@@ -156,16 +157,16 @@ sub engine {
     my%ans;
     $::exp->send("position $movelist1\r");
     $::exp->send("d\r");
-    my@expect_result=$::exp->expect(undef,'-re','Fen: .*?\n') or die;
+    my@expect_result=$::exp->expect($::TIMEOUT,'-re','Fen: .*?\n') or die;
     $ans{fen}=$expect_result[2];
-    @expect_result=$::exp->expect(undef,'-re','Checkers:.*?\n') or die;
+    @expect_result=$::exp->expect($::TIMEOUT,'-re','Checkers:.*?\n') or die;
     my $ischeck=$expect_result[2]; #this will get cleaned up below
     $::exp->send("perft 1\r");
     #benchmark.cpp
-    $::exp->expect(undef,'Position: 1/1')or die;
+    $::exp->expect($::TIMEOUT,'Position: 1/1')or die;
     my@moves;
     for(;;){
-        @expect_result=$::exp->expect(undef,'-re','\S+?: 1\r\n','-re','={27}.*\n') or die;
+        @expect_result=$::exp->expect($::TIMEOUT,'-re','\S+?: 1\r\n','-re','={27}.*\n') or die;
         my $item=$expect_result[2];
         if($item =~/(.*): 1/){
             push@moves,$1;
@@ -175,10 +176,10 @@ sub engine {
             die;
         }
     }
-    @expect_result=$::exp->expect(undef,'-re','Nodes searched\s*:\s*\d+\r\n') or die;
+    @expect_result=$::exp->expect($::TIMEOUT,'-re','Nodes searched\s*:\s*\d+\r\n') or die;
     die unless $expect_result[2]=~/Nodes searched\s*:\s*(\d+)/;
     my$count=$1;
-    $::exp->expect(undef,'-re','Nodes/second\s*:\s*\d+\s*\r\n') or die;
+    $::exp->expect($::TIMEOUT,'-re','Nodes/second\s*:\s*\d+\s*\r\n') or die;
     $::exp->send("quit\r");
     $::exp->expect(undef);
     $ans{fen} =~ s/\s*$//;

@@ -7,6 +7,7 @@ use Getopt::Long;
 
 sub main {
     $::command = 'stockfish';
+    $::TIMEOUT = 99;
     GetOptions('engine=s' => \$::command,
                'threads=i' => \$::threads,
                'verbose'=>\$::verbose,
@@ -21,7 +22,7 @@ sub main {
     my$list = join ' ',@ARGV;
     unshift @ARGV,'--chess960' if $::chess960;
     #validate
-    die if system('perl','moves-to-fen-stockfish.pl',@ARGV);
+    die $list if system('perl','moves-to-fen-stockfish.pl',@ARGV);
     #print $list;
     my$answer=&engine($list,$timethink);
     print "$answer\n";
@@ -38,9 +39,9 @@ sub start_engine {
     }
     #getting these line endings wrong results in very confusing behavior
     #the line endings also depend on the -l switch to perl
-    $::exp->expect(15, ("\r\n")) or die;
+    $::exp->expect($::TIMEOUT, ("\r\n")) or die;
     $::exp->send("uci\r");
-    $::exp->expect(5,("uciok\r\n")) or die;
+    $::exp->expect($::TIMEOUT,("uciok\r\n")) or die;
     if($::threads){
         $::exp->send("setoption name Threads value $::threads\r");
     }
@@ -56,9 +57,9 @@ sub start_engine {
     }
     $::exp->send("isready\r");
     #weirdly, stockfish occasionally dies here
-    $::exp->expect(undef,("readyok\r\n")) or die;
+    $::exp->expect($::TIMEOUT,("readyok\r\n")) or die;
     $::exp->send("ucinewgame\risready\r");
-    $::exp->expect(undef,("readyok\r\n")) or die;
+    $::exp->expect($::TIMEOUT,("readyok\r\n")) or die;
 }
 
 sub engine {
@@ -67,7 +68,7 @@ sub engine {
 
     &start_engine;
     $::exp->send("position $movelist1\rd\reval\risready\r");
-    $::exp->expect(undef,("readyok\r\n")) or die;
+    $::exp->expect($::TIMEOUT,("readyok\r\n")) or die$movelist1;
     $::exp->send("go $timethink\r");
     my $successfully_matching_string;
     my%seen;
@@ -80,7 +81,7 @@ sub engine {
         #the ordering of the expect clauses matter.
         # sometimes the event loop sees the sum of two lines at once.
         # in which case, $after cycles to $current in the next cycle
-        my@expect_result=$::exp->expect(undef,("-re",'info .*?\n',"-re",'^bestmove.*?\n')) or die;
+        my@expect_result=$::exp->expect($::TIMEOUT,("-re",'info .*?\n',"-re",'^bestmove.*?\n')) or die $movelist1;
         #loop on all the info output to avoid filling the buffer
         $successfully_matching_string=$expect_result[2];
         #print STDERR "gotsms $successfully_matching_string\n";
@@ -97,7 +98,7 @@ sub engine {
             $seen{"$depth $multipv"}=$pv;
             $scores{"$depth $multipv"}=$score;
             # could also store score
-            die if $nodes<$maxnodes;
+            die$movelist1 if $nodes<$maxnodes;
             $maxnodes=$nodes;
         }
         elsif (($depth,$multipv)=($successfully_matching_string=~/^info depth (\d+) currmove .+ currmovenumber (\d+)/)){
@@ -109,7 +110,7 @@ sub engine {
             }
         }elsif (($nodes)=($successfully_matching_string =~ /^info nodes \d+ time \d+/)){
             # this happens once just at the end
-            die if $nodes<$maxnodes;
+            die$movelist1 if $nodes<$maxnodes;
             $maxnodes=$nodes;
         }elsif ($successfully_matching_string eq "info depth 0 score mate 0\r\n") {
             #when you give it a mate position
@@ -118,13 +119,13 @@ sub engine {
         }elsif ($successfully_matching_string =~ /^bestmove/){
             last;
         }else {
-            die "bad line $successfully_matching_string";
+            die "bad line $successfully_matching_string,$movelist1";
         }
     }
-    die unless $successfully_matching_string=~/^bestmove (\S+)/;
+    die$movelist1 unless $successfully_matching_string=~/^bestmove (\S+)/;
     my $computermove=$1;
     $::exp->send("quit\r");
-    $::exp->expect(undef);
+    $::exp->expect(undef); #not sure if the actually accomplishes waiting for the process to die, and how long it will wait
     if($::multipv){
         #we do not trust the "bestmove" output with multipv.
         #Instead, explicitly choose the highest ranked move of the last completed depth.
@@ -133,16 +134,16 @@ sub engine {
                 $deepest--;
                 #incomplete final depth
             }
-            die unless $deepest>0;
-            die unless defined $seen{"$deepest $largest"};
-            die unless defined $seen{"$deepest 1"};
+            die$movelist1 unless $deepest>0;
+            die$movelist1 unless defined $seen{"$deepest $largest"};
+            die$movelist1 unless defined $seen{"$deepest 1"};
             $computermove=$seen{"$deepest 1"};
             if($::verbose){
                 print"verbose deepest $deepest largest $largest score ",$scores{"$deepest 1"}," maxnodes $maxnodes\n";
             }
 
         } else {
-            die unless $computermove eq '(none)'
+            die$movelist1 unless $computermove eq '(none)'
         }
     }
     $computermove;

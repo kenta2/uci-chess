@@ -33,33 +33,34 @@ for$i(1..100){
     &nanopause;
 }
 unless(@queue){
-    die "empty queue";
+    exit 1; # this exit status is needed to kill the event loop
+    #die "empty queue";
 }
 #randomization to somewhat soften race conditions
 $i=int rand@queue;
 $file=$queue[$i];
 #print "file $file";
-die unless ($base)=($file=~m,run/queue/(.*),);
+die $file unless ($base)=($file=~m,run/queue/(.*),);
 #currently the following is not used
 ($fiftyfen)=($base=~/_(\d+$)/) or $fiftyfen=0;  #preserve ability to use fifty-move draw if we bring it back
 
 #avoid race condition
 unless (open FI,$file) {
-    print "failed to open";
+    print "failed to open $file";
     &nanopause;
     exit;
 }
 unless(defined($_=<FI>)){
-    print "failed to read a line";
+    print "failed to read a line $file";
     &nanopause;
-    die;
+    exit;
 }
 close FI;
 chomp;
 unless (s/ EOF$//){
     #guard against partially written files.
     &nanopause;
-    die;
+    exit;
 }
 if (/^chess960 (.+)/){
     $list = $1;
@@ -75,37 +76,37 @@ if(`$moves_to_fen --fifty $list` =~ /fifty (\d+)/){
 } else {
     # perhaps race condition of a file being half written
     &nanopause;
-    die;
+    exit;
 }
 
 my $db=BerkeleyDB::Btree->new (
     -Filename => 'positions.db',
     -Flags => DB_CREATE,
     -Env => $env
-) or die "cannot open it $BerkeleyDB::Error";
+) or die "cannot open it ($tartag) $BerkeleyDB::Error";
 
 # key=$base
 if($fiftyfen>=2*50){
     $status=$db->db_put($base,"draw fifty by fen",DB_NOOVERWRITE);
-    die "fiftyfen $status" unless ($status==0 or $status==DB_KEYEXIST);
+    die "fiftyfen $base $status" unless ($status==0 or $status==DB_KEYEXIST);
     print "fiftyfen already" if$status;
 } elsif($fiftyproof>=2*50){
     $status=$db->db_put($base,"draw fifty by proof game",DB_NOOVERWRITE);
-    die "fiftyproof $status" unless ($status==0 or $status==DB_KEYEXIST);
-    print "fiftyproof already" if$status;
+    die "fiftyproof $base $status" unless ($status==0 or $status==DB_KEYEXIST);
+    #print "fiftyproof already" if$status;
 } elsif($db->db_get($base,$value)==0){
     print "already db $base $value." if 0;
 } else {
     $status=$db->db_put($base,""); #empty file marks calculation in progress
-    die "empty put $status" unless $status==0;
-    for my$retries(1..1){
+    die "empty put $base $status" unless $status==0;
+    for my$retries(1..10){
         $logfile="run/log/$base.$$.log";
         $command=qq(perl bestmove.pl --multipv --log=$logfile $chess960 "$timethink" $list);
         #print "command =$command";
         $_=`$command`;
         system "bzip2",$logfile;
         $logfile.='.bz2';
-        ($slog=$logfile)=~s,^run/,, or die;
+        ($slog=$logfile)=~s,^run/,, or die $base;
         unless(system 'tar','rf',"run/log/$tartag.tar",'-C','run',$slog){
             unlink "$logfile";
         } else {
@@ -114,30 +115,30 @@ if($fiftyfen>=2*50){
         # xxx add to tar
         chomp;
         last if /\S/;
-        print " (retry)";
+        print "$tartag $base (retry)";
     }
     #print "bestmove=$_";
-    die unless /\S/; #too many retries
+    die $base unless /\S/; #too many retries
     $status=$db->db_put($base,$_);
     if($_ eq '(none)'){
-        die unless `$moves_to_fen --status $list` =~ /mate/;
+        die $base unless `$moves_to_fen --status $list` =~ /mate/;
     } else {
         $list.=" $_";
         #print STDERR $list;
         $fen=`$moves_to_fen --fen $list`;
         chomp$fen;
         $fen=~ s/^fen // or die;
-        die unless $fen;
+        die $base unless $fen;
         $fen="run/queue/$fen";
         if (-e $fen){
             #print "transposition";
         } else {
             #print "new $fen";
             #race condition possible here...
-            open FO,">$fen" or die;
+            open FO,">$fen" or die $base;
             $list="chess960 $list" if $chess960;
-            print FO "$list EOF" or die;
-            close FO or die;
+            print FO "$list EOF" or die $base;
+            close FO or die$base;
         }
     }
 }
