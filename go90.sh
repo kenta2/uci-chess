@@ -23,7 +23,7 @@ for ((i=1;i<=$numthreads;i++))
 do echo $i
     while nice -19 perl mainline.pl $i
     do if [ -e stop ]
-        then echo stop
+        then echo stop $i
             break
         fi
     done &
