@@ -81,7 +81,7 @@ sub engine {
         #the ordering of the expect clauses matter.
         # sometimes the event loop sees the sum of two lines at once.
         # in which case, $after cycles to $current in the next cycle
-        my@expect_result=$::exp->expect($::TIMEOUT,("-re",'info .*?\n',"-re",'^bestmove.*?\n')) or die $movelist1;
+        my@expect_result=$::exp->expect(undef,("-re",'info .*?\n',"-re",'^bestmove.*?\n')) or die $movelist1;
         #loop on all the info output to avoid filling the buffer
         $successfully_matching_string=$expect_result[2];
         #print STDERR "gotsms $successfully_matching_string\n";
