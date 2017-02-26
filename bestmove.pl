@@ -1,5 +1,5 @@
 #!perl -w
-# perl bestmove.pl --multipv --log=... --hash=5000 "nodes 10000000" e2e4
+# perl bestmove.pl --multipv --log=... --hash=5000 "nodes 10000000" startpos moves e2e4
 use Expect;
 use strict;
 use Getopt::Long;
