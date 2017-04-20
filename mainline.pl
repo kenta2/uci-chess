@@ -136,10 +136,10 @@ if($fiftyfen>=2*50){
         } else {
             #print "new $fen";
             #race condition possible here...
-            open FO,">$fen" or die $base;
-            $list="chess960 $list" if $chess960;
-            print FO "$list EOF" or die $base;
-            close FO or die$base;
+            #open FO,">$fen" or die $base;
+            #$list="chess960 $list" if $chess960;
+            #print FO "$list EOF" or die $base;
+            #close FO or die$base;
         }
     }
 }
